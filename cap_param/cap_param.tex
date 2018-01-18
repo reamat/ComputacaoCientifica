@@ -1,0 +1,1594 @@
+\chapter{Passagem de Parâmetros}
+
+\section{Passagem de vetores para função}
+\begin{ex}
+Escreva um programa com uma função que recebe um vetor e devolve outro vetor contento mínimo, máximo e norma.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#define N 4
+void teste(double x[N], double saida[3])
+{
+  double max=x[0], norma=0, min=x[0];
+  int i;
+  for (i=0;i<N;i++) 
+  {
+    norma+=x[i]*x[i];
+    if (max<x[i]) max=x[i];
+    if (min>x[i]) min=x[i];
+  }
+saida[0]=min;
+saida[1]=max;
+saida[2]=sqrt(norma);
+return;
+}
+
+
+main (void)
+{
+  double a[N]={1,-2,3,4},saida[3];
+  teste(a,saida);
+  printf("mínimo=%f, máximo=%f, norma=%f\n",saida[0],saida[1],saida[2]);  
+}
+\end{verbatim}
+Quando passamos um vetor de N posições para dentro de uma função, não estamos levando N valores, mas um único valor que é o endereço de memória dos vetores. Veja como chamamos a linha \verb|teste(a,saida);|. Aqui \verb|a| e \verb|saida| são endereços de memória dos vetores. Naturalmente, a protótipo \verb|void teste(double x[N], double saida[3])| também funciona da forma \verb|void teste(double *x, double *saida)|, pois, de fato, estamos passando um ponteiro.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#define N 4
+void teste(double *x, double *saida)
+{
+  double max=*x, norma=0, min=*x;
+  int i;
+  for (i=0;i<N;i++) 
+  {
+    norma+=*(x+i)**(x+i);
+    if (max<*(x+i)) max=*(x+i);
+    if (min>*(x+i)) min=*(x+i);
+  }
+*saida=min;
+saida++;
+*saida=max;
+saida++;
+*saida=sqrt(norma);
+return;
+}
+main (void)
+{
+  double a[N]={1,-2,3,4},saida[3];
+  teste(a,saida);
+  printf("mínimo=%f, máximo=%f, norma=%f\n",saida[0],saida[1],saida[2]);  
+}
+\end{verbatim}
+Uma versão mista do código também funciona.
+
+Uma grande vantagem dos ponteiros é evitar a copia um vetor inteiro de uma posição da memória para outra, mas apenas trocar um ponteiro que aponta para o tal vetor. Isso reduz significantemente o custo computacional de um processo iterativo.
+\begin{ex}
+Vamos refazer o exemplo \ref{ex_Jacobi_2}, que resolve um problema de contorno, melhorando a performance do processo iterativo com uso de ponteiros
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+#define N 101 /* dimensão do sistema*/
+
+double norma_2(double x[N])
+{
+  int i;
+  double norma2=x[0]*x[0]/(2*(N-1));
+  for (i=1;i<N-1;i++)
+  {
+    norma2+=x[i]*x[i]/(N-1);
+  }
+  norma2+=x[N-1]*x[N-1]/(2*(N-1));
+  return sqrt(norma2);	
+}
+void Iteracao(double u_antigo[N],double u_atual[N],double matriz[N][N], double vetor[N])
+{
+  double aux;
+  int i,j;
+  for (i=0;i<N;i++)
+  {
+    aux=0;
+    for (j=0;j<i;j++)
+    aux+=matriz[i][j]*u_antigo[j];
+    for (j=i+1;j<N;j++)
+    aux+=matriz[i][j]*u_antigo[j];
+    u_atual[i]=(vetor[i]-aux)/matriz[i][i];
+  }
+}
+void Jacobi(double tolerancia,double u_atual[N],double vetor[N],double matriz[N][N],double malha[N])
+{
+  double u_antigo[N],dif[N];
+  int i,controle=3;
+  double *pu_antigo=u_antigo,*pu_atual=u_atual,*pswap;
+
+  //chute inicial
+  for (i=0;i<N;i++)u_antigo[i]=0;
+
+  //iteração
+  while (controle)
+  {
+    Iteracao(pu_antigo,pu_atual,matriz,vetor);
+    for (i=0;i<N;i++) dif[i]=u_atual[i]-u_antigo[i];
+    if (norma_2(dif)<tolerancia) controle--;
+    else controle=3;
+    pswap=pu_atual;
+    pu_atual=pu_antigo;
+    pu_antigo=pswap;
+  }
+  return;
+}
+
+double solucao_analitica(double x)
+{
+return -25.*(x-1.)*(x-1.)*(x-1.)*(x-1.)/3-25.*x/3+25./3.;
+}
+
+main (void)
+{
+  int i,j;
+  double tolerancia=1e-10,solucao[N];
+  double matriz[N][N];
+  double vetor[N],x[N];
+  //malha
+  double h=1./(N-1); 
+  for (i=0;i<N;i++) x[i]=i*h;
+  
+  
+  //matriz e vetor
+  for (i=0;i<N;i++) for (j=0;j<N;j++) matriz[i][j]=0;
+  matriz[0][0]=1;
+  vetor[0]=0;
+  for (i=1;i<N-1;i++) 
+  {
+    matriz[i][i]=-2;
+    matriz[i][i+1]=1;
+    matriz[i][i-1]=1;
+    vetor[i]=-100*h*h*(x[i]-1)*(x[i]-1);
+  }
+  matriz[N-1][N-1]=1;
+  vetor[N-1]=0;
+
+  Jacobi(tolerancia,solucao,vetor,matriz,x);
+  //erro médio
+  double erro=0;
+  for (i=0;i<N;i++) erro+=fabs(solucao[i]-solucao_analitica(x[i]));
+  erro/=N;
+  printf("erro médio = %f\n",erro);
+//  for (i=0;i<N;i++)     printf("u_%d=%f, u(x[%d]) = %f\n",i,solucao[i],i,solucao_analitica(x[i]));
+}
+\end{verbatim}
+
+
+\section{Passagem de parâmetros}
+Para entender como funciona a passagem de parâmetros, vamos trabalhar com um exemplo.
+\begin{ex}
+Implemente um programa que troca os valores de duas variáveis entre si.
+\end{ex}
+Uma solução simples para o exemplo acima é implementar a troca direto no main.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+void main(void)
+{
+  double a=2,b=3,tmp;
+  printf("a=%f, b=%f\n",a,b);
+  tmp=a;
+  a=b;
+  b=tmp;
+  printf("a=%f, b=%f\n",a,b);
+}
+\end{verbatim}
+No entanto, suponha que gostaríamos de separar um função para fazer a troca. Então, a função entrar \verb|a| e \verb|b| e devolver com valores trocados. Teste o código abaixo:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+void troca(double a,double b)
+{
+  double tmp=a;
+  a=b;
+  b=tmp;
+}
+
+void main(void)
+{
+  double a=2,b=3;
+  printf("a=%f, b=%f\n",a,b);
+  troca(a,b);
+  printf("a=%f, b=%f\n",a,b);
+}
+\end{verbatim}
+Apesar de compilar e rodar sem erros, o código não faz o que queremos. Isso se deve ao fato que quando executamos um função, o programa separa uma parte da memória para o trabalho, faz cópia das valores do parâmetros de entrada, inicia variáveis locais, e, no fim da rotina, apaga toda a parte da memória usada para esse fim. Na prática, a função \verb|troca| criou um espaço na memória, copiou os valores de \verb|a| e \verb|b| e trocou eles de lugar. Mas os valores de \verb|a| e \verb|b| nas posições originais não se alteraram. Isso de resolve se passarmos uma referência para a função e não um valor.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+void troca(double *a,double *b)
+{
+  double tmp=*a;
+  *a=*b;
+  *b=tmp;
+}
+
+void main(void)
+{
+  double a=2,b=3;
+  printf("a=%f, b=%f\n",a,b);
+  troca(&a,&b);
+  printf("a=%f, b=%f\n",a,b);
+}
+\end{verbatim}
+Agora, a função troca criou um ambiente e levou os endereços de \verb|a| e \verb|b|. Com os endereços, pudemos acessar os valores de \verb|a| e \verb|b| que estão fora desse ambiente e trocá-los de posição. 
+
+Em resumo, quando queremos apenas usar um parâmetro dentro de uma função, podemos passar o valor. Mas se queremos atualizar seu valor na passagem pela função, deveremos passar a referência.
+
+Vamos refazer o mesmo exemplo de troca usando vetor de duas posições
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+void troca(double v[2])
+{
+  double tmp=v[0];
+  v[0]=v[1];
+  v[1]=tmp;
+}
+
+void main(void)
+{
+  double v[2]={2,3};
+  printf("a=%f, b=%f\n",v[0],v[1]);
+  troca(v);
+  printf("a=%f, b=%f\n",v[0],v[1]);
+}
+\end{verbatim}
+
+Agora, nós passamos um vetor e o atualizamos, que parece contradizer aquilo que acabamos de dizer. Mas não se engane, quando usamos vetor, automaticamente o função já passa apenas a referência. Veja uma forma alternativa abaixo:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+void troca(double *v)
+{
+  double tmp=*v;
+  *v=*(v+1);
+  *(v+1)=tmp;
+}
+
+void main(void)
+{
+  double v[2]={2,3};
+  printf("a=%f, b=%f\n",v[0],v[1]);
+  troca(v);
+  printf("a=%f, b=%f\n",v[0],v[1]);
+}
+\end{verbatim}
+
+
+
+\begin{ex}\label{ex_New_pont}
+Implemente uma rotina para calcular a raíz de uma função pelo método de Newton passando o chute inicial e retornando a solução e o número de iterações necessárias.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+double f(double x)
+{
+  return cos(x)-x;
+}
+double df(double x)
+{
+  return -sin(x)-1.;
+}
+
+void Newton(double x0, double tol, double *xn, int *k)
+{
+  double dif;
+  *k=0;
+  do
+  {
+  (*k)++;
+  *xn=x0-f(x0)/df(x0);
+  dif=fabs(*xn-x0);
+  x0=*xn;
+  }while (dif>tol);
+}
+
+
+void main(void)
+{
+  double x0=2,xn,tol=1e-10;
+  int k;
+  Newton(x0,tol,&xn,&k);
+  printf("Sol=%f, iterações=%d\n",xn,k);
+}
+\end{verbatim}
+
+\section{Problemas}
+Você deve ter observado que todos os exercícios na aula 8 resultam em um sistema tridiagonal. O algorítmo de Thomas é um método eficiente para resolvê-los.
+\begin{ex}Implemente o método de Thomas para resolver um sistema $Ax=b$ de dimensão $N$. 
+\end{ex}
+O algoritmo TDMA para resolver o sistema
+\begin{eqnarray*}\label{linsis:EqTriDiag.0} \begin{bmatrix}
+   {b_1} & {c_1} & {   } & {   } & {   } \\
+   {a_2} & {b_2} & {c_2} & {   } & {   } \\
+   {   } & {a_3} & {b_3} & \ddots & {   } \\
+   {   } & {   } & \ddots & \ddots & {c_{n-1}}\\
+   {   } & {   } & {   } & {a_n} & {b_n}\\
+\end{bmatrix}
+\begin{bmatrix}
+   {x_1 }  \\
+   {x_2 }  \\
+   {x_3 }  \\
+   \vdots   \\
+   {x_n }  \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+   {d_1 }  \\
+   {d_2 }  \\
+   {d_3 }  \\
+   \vdots   \\
+   {d_n }  \\
+\end{bmatrix}
+.
+\end{eqnarray*}
+é dado por
+\begin{eqnarray*}\label{linsis:TriDiag_1.1}
+ c'_i &=&
+\begin{cases}
+\begin{array}{lcl}
+  \frac{c_i}{b_i}                   , & i = 1 \\
+  \frac{c_i}{b_i - a_i c'_{i - 1}}  , & i = 2, 3, \dots, n-1
+\end{array}
+\end{cases},\\
+\text{}\nonumber\\
+d'_i &=&
+\begin{cases}
+\begin{array}{lcl}
+  \frac{d_i}{b_i}                   , & i = 1 \\
+  \frac{d_i - a_i d'_{i - 1}}{b_i - a_i c'_{i - 1}}  , & i = 2, 3, \dots, n.
+\end{array}
+\end{cases}
+\end{eqnarray*}
+e
+\begin{eqnarray*}\label{linsis:TriDiag_2.2}
+x_n &=& d'_n\\
+ x_i &=& d'_i - c'_i x_{i + 1}, \qquad   i = n - 1, n - 2, \ldots, 1.
+\end{eqnarray*}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#define N 3
+
+//Método de Thomas para resolver Ax=y
+//x entra o vetor y e saí a solução x (N posições, i=0,....,N-1)
+//a entra a subdiagonal à esquerda de A (N-1 posições, i=1,...,N-1)
+//b entra a diagonal  (N posições, i=0,....,N-1)
+//c entra a subdiagonal à direita de A (N-1 posições, i=0,...,N-2)
+void Thomas(double x[], const double a[], const double b[], double c[]) 
+{
+  int i;
+
+  /*calculo de c[0]' e d[0]'*/
+  c[0] = c[0] / b[0];
+  x[0] = x[0] / b[0];
+
+
+  /* laço para calcular c' e d' */
+  for (i = 1; i < N; i++) 
+  {
+    double aux = 1.0/ (b[i] - a[i] * c[i - 1]);
+    c[i] = c[i] * aux;
+    x[i] = (x[i] - a[i] * x[i - 1]) * aux;
+  }
+
+  /* Calculando a solução */
+  for (i = N - 1; i >= 0; i--)
+    x[i] = x[i] - c[i] * x[i + 1];
+}
+
+
+main (void)
+{
+  double x[N],a[N],b[N],c[N];
+  a[0]=0;c[N-1]=0;
+
+  x[0]=4;x[1]=9;x[2]=11;
+  a[1]=1;a[2]=1;
+  b[0]=3;b[1]=3;b[2]=3;
+  c[0]=1;c[1]=1;
+  Thomas(x,a,b,c);
+  printf("%f, %f, %f\n",x[0],x[1],x[2]);
+}
+\end{verbatim}
+\begin{ex}\label{ex_PVC_TDMA} Use o algoritmo TDMA para resolver o PVC
+$$\left\{\begin{array}{l}-u_{xx}+u_x=200e^{-(x-1)^2},~~ 0<x<1.\\
+15u(0)+u'(0)=500\\
+10u(1)+u'(1)=1\end{array}
+\right.
+$$
+\end{ex}
+Uma versão discreta oriunda do método de diferenças finitas é
+\begin{align*}
+ &15u_1+\frac{u_2-u_1}{h}=500\\
+ &\frac{-u_{i+1}+2u_i-u_{i-1}}{h^2}+\frac{u_{i+1}-u_{i-1}}{2h}=200e^{-(x_i-1)^2},\qquad i=2,3,...,N-1\\
+ &10u_N+\frac{u_N-u_{N-1}}{h}=1\\
+\end{align*}
+onde $x_i=h(i-1)$, $i=1,2,...,N$, $h=\frac{1}{N-1}$. Isto é,
+\begin{align*}
+ &u_1\left(15-\frac{1}{h}\right)+u_2\left(\frac{1}{h}\right)=500\\
+ &u_{i-1}\left(-\frac{1}{h^2}-\frac{1}{2h}\right)+u_{i}\left(\frac{2}{h^2}\right)+u_{i+1}\left(-\frac{1}{h^2}+\frac{1}{2h}\right)=200e^{-(x_i-1)^2},\qquad i=2,3,...,N-1\\
+ &u_{N-1}\left(-\frac{1}{h}\right)+u_N\left(10+\frac{1}{h}\right)=1\\
+\end{align*}
+ou ainda
+\begin{equation*}
+ \left[\begin{array}{ccccccc}
+        15-\frac{1}{h}&\frac{1}{h}&0&0&0&\cdots&0\\
+        -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}&-\frac{1}{h^2}+\frac{1}{2h}&0&0&\cdots&0\\
+              0&  -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}&-\frac{1}{h^2}+\frac{1}{2h}&0&\cdots&0\\
+              \vdots&\vdots&\vdots&\vdots&\ddots&&\vdots\\
+              0&\cdots&0&0& -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}&-\frac{1}{h^2}+\frac{1}{2h}\\
+              0&\cdots&0&0&0& -\frac{1}{h}&10+\frac{1}{h}
+       \end{array}
+\right]\left[\begin{array}{c}
+             u_1\\u_2\\u_3 \\ \vdots\\ u_{N-1}\\u_N 
+             \end{array}
+\right]=\left[\begin{array}{c}
+             500\\200e^{-(x_2-1)^2}\\200e^{-(x_3-1)^2} \\ \vdots\\ 200e^{-(x_{N-1}-1)^2}\\1 
+             \end{array}
+\right]
+\end{equation*}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#define N 11
+
+//Método de Thomas para resolver Ax=y
+//x entra o vetor y e saí a solução x (N posições, i=0,....,N-1)
+//a entra a subdiagonal à esquerda de A (N-1 posições, i=1,...,N-1)
+//b entra a diagonal  (N posições, i=0,....,N-1)
+//c entra a subdiagonal à direita de A (N-1 posições, i=0,...,N-2)
+void Thomas(double x[], const double a[], const double b[], double c[]) 
+{
+  int i;
+
+  /*calculo de c[0]' e d[0]'*/
+  c[0] = c[0] / b[0];
+  x[0] = x[0] / b[0];
+
+
+  /* laço para calcular c' e d' */
+  for (i = 1; i < N; i++) 
+  {
+    double aux = 1.0/ (b[i] - a[i] * c[i - 1]);
+    c[i] = c[i] * aux;
+    x[i] = (x[i] - a[i] * x[i - 1]) * aux;
+  }
+
+  /* Calculando a solução */
+  for (i = N - 1; i >= 0; i--)
+    x[i] = x[i] - c[i] * x[i + 1];
+}
+
+
+main (void)
+{
+  double x[N],a[N],b[N],c[N];
+  a[0]=0;c[N-1]=0;
+
+  //malha
+  int i;
+  double h=1./(N-1);
+  double p[N];
+  for (i=0;i<N;i++) p[i]=i*h;
+  
+  //sistema
+  b[0]=15-1/(h);
+  c[0]=1/(h);
+  x[0]=500;
+  for (i=1;i<N-1;i++)
+  {
+  b[i]=2/(h*h);
+  a[i]=-1/(h*h)-1/(2*h);
+  c[i]=-1/(h*h)+1/(2*h);
+  x[i]=200*exp(-(p[i]-1)*(p[i]-1));
+  }
+  b[N-1]=10+1/h;
+  a[N-1]=-1/h;
+  x[N-1]=1;
+  Thomas(x,a,b,c);
+  for (i=0;i<N;i++) printf("%f\n",x[i]);
+}
+\end{verbatim}
+
+
+Com o objetivo de resolver alguns problemas de contorno não lineares, vamos implementar o método de Newton para sistema.
+\begin{ex}\label{ex_Newton_1} Implemente um código para calcular raízes do sistema não linear
+\begin{eqnarray*}
+x_1^2=\cos(x_1x_2)+1\\
+\sin(x_2)=2\cos(x_1).
+\end{eqnarray*}
+Calcule uma aproximação para a raíz que fica próxima ao ponto $x_1=1,5$ e $x_2=0,5$.
+\end{ex}
+O método iterativo de Newton-Raphson para encontrar as raízes de $F(x)=0$, 
+$$F(x)=\left[
+\begin{array}{c}
+f_1(x_1,x_2,\ldots,x_n)\\
+f_2(x_1,x_2,\ldots,x_n)\\
+\vdots\\
+f_n(x_1,x_2,\ldots,x_n)
+\end{array}
+\right],$$
+é dado por
+\begin{equation*}
+\left\{\begin{array}{rcl}
+x^{(0)}&=&\text{dado inicial}\\
+x^{(k+1)} &=& x^{(k)}-J_F^{-1}\left(x^{(k)}\right)F(x^{(k)}),~~ k\geq 0
+\end{array}\right.  
+\end{equation*}
+onde a matriz Jacobina $J_F$ é 
+$$J_F= \frac{\partial(f_1,f_2,\ldots,f_n)}{\partial(x_1,x_2,\ldots,x_n)}=\left[
+\begin{array}{ccccc}
+\frac{\partial f_1}{\partial x_1}&\frac{\partial f_1}{\partial x_2}&\cdots&\frac{\partial f_1}{\partial x_n}\\~\\
+\frac{\partial f_2}{\partial x_1}&\frac{\partial f_2}{\partial x_2}&\cdots&\frac{\partial f_2}{\partial x_n}\\~\\
+\vdots&\vdots&\ddots&\vdots\\~\\
+\frac{\partial f_n}{\partial x_1}&\frac{\partial f_n}{\partial x_2}&\cdots&\frac{\partial f_n}{\partial x_n}\\~\\
+\end{array}
+\right].
+$$
+Especificamente no problema do exemplo \ref{ex_Newton_1}, temos
+\begin{eqnarray*}
+F(x)=\left[\begin{array}{c}x_1^2-\cos(x_1x_2)-1\\
+\sin(x_2)-2\cos(x_1)\end{array}\right].
+\end{eqnarray*}
+e
+\begin{eqnarray*}
+J_F(x)=\left[\begin{array}{cc}2x_1+x_2\sin(x_1x_2)   &x_1\sin(x_1x_2)\\
+2\sin(x_1)  &\cos(x_2)\end{array}\right].
+\end{eqnarray*}
+Observamos que na prática não invertemos a matriz Jacobina, mas calculamos a solução do sistema $J_F\delta=F$: 
+\begin{equation*}
+\left\{\begin{array}{rcl}
+x^{(0)}&=&\left[\begin{array}{c}1,5\\0,5\end{array}\right]\\
+J_F(x^{(k)}) \delta^{(k)}&=&F(x^{(k)})\ \ \ \ \  \text{(Calcula-se a solução $\delta^{(k)}$ do sistema)}\\
+x^{(k+1)} &=& x^{(k)}-\delta^{(k)},~~ k\geq 0
+\end{array}\right.  
+\end{equation*}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#define N 2
+
+//Método de Thomas para resolver Ax=y
+//x entra o vetor y e saí a solução x (N posições, i=0,....,N-1)
+//a entra a subdiagonal à esquerda de A (N-1 posições, i=1,...,N-1)
+//b entra a diagonal  (N posições, i=0,....,N-1)
+//c entra a subdiagonal à direita de A (N-1 posições, i=0,...,N-2)
+void Thomas(double x[], const double a[], const double b[], double c[]) 
+{
+  int i;
+
+  /*calculo de c[0]' e d[0]'*/
+  c[0] = c[0] / b[0];
+  x[0] = x[0] / b[0];
+
+
+  /* laço para calcular c' e d' */
+  for (i = 1; i < N; i++) 
+  {
+    double aux = 1.0/ (b[i] - a[i] * c[i - 1]);
+    c[i] = c[i] * aux;
+    x[i] = (x[i] - a[i] * x[i - 1]) * aux;
+  }
+
+  /* Calculando a solução */
+  for (i = N - 1; i >= 0; i--)
+    x[i] = x[i] - c[i] * x[i + 1];
+}
+//Função 
+//x é o ponto de entrada
+//f é o vetor com o resultado de f(x)
+void F(double *x,double *f)
+{
+  f[0]=x[0]*x[0]-cos(x[0]*x[1])-1.0;
+  f[1]=sin(x[1])-2*cos(x[0]);
+}
+//Jacobiana
+//x é o ponto de entrada
+//a sai a subdiagonal à esquerda de A (N-1 posições, i=1,...,N-1)
+//b sai a diagonal  (N posições, i=0,....,N-1)
+//c sai a subdiagonal à direita de A (N-1 posições, i=0,...,N-2)
+void J(double *x,double *a,double *b,double *c)
+{
+  b[0]=2*x[0]+x[1]*sin(x[0]*x[1]);
+  a[0]=0;
+  c[0]=x[0]*sin(x[0]*x[1]);
+  a[1]=2*sin(x[0]);
+  c[1]=0;
+  b[1]=cos(x[1]);
+}
+//norma da diferença entre dois vetores
+double norma_dif(double x[N],double y[N])
+{
+  int i;
+  double norma2=0;
+  for (i=0;i<N;i++)
+  {
+    norma2+=(x[i]-y[i])*(x[i]-y[i]);
+  }
+  return sqrt(norma2);	
+}
+main (void)
+{
+  int i;
+  double x0[N],x[N],d[N],a[N],b[N],c[N],tol=1e-10,*px0=x0,*px=x,*paux=NULL;
+  x0[0]=1.5;
+  x0[1]=0.5;
+  do
+  {
+    F(px0,d);
+    J(px0,a,b,c);
+    Thomas(d,a,b,c);
+    for (i=0;i<N;i++) *(px+i)=*(px0+i)-d[i];
+    for (i=0;i<N;i++) printf("%.12f  ",*(px+i));
+    printf("\n");
+    paux=px0;
+    px0=px;
+    px=paux;
+  }while(norma_dif(px0,px)>tol);
+}
+\end{verbatim}
+
+
+
+\begin{ex}Use o método de diferenças finitas e o método de Newton para resolver o problema de valor de contono não-linear
+$$\left\{\begin{array}{l}-u_{xx}+u_x=e^{-u^2},~~ 0<x<1.\\
+u'(0)+3u(0)=10\\
+u(1)=5\end{array}
+\right.
+$$
+\end{ex}
+Uma versão discreta oriunda do método de diferenças finitas é
+\begin{align*}
+ &3u_1+\frac{u_2-u_1}{h}=10\\
+ &\frac{-u_{i+1}+2u_i-u_{i-1}}{h^2}+\frac{u_{i+1}-u_{i-1}}{2h}=e^{-u_i^2},\qquad i=2,3,...,N-1\\
+ &u_N=5\\
+\end{align*}
+onde $x_i=h(i-1)$, $i=1,2,...,N$, $h=\frac{1}{N-1}$. Podemos colocar na forma $F(u)=0$, onde $u=[u_1\ \ u_2\ \cdots \ u_N]^T$ e 
+\begin{equation*}
+F(u)=\left\{\begin{array}{l} 3u_1+\frac{u_2-u_1}{h}-10\\
+ \frac{-u_{i+1}+2u_i-u_{i-1}}{h^2}+\frac{u_{i+1}-u_{i-1}}{2h}-e^{-u_i^2},\qquad i=2,3,...,N-1\\
+ u_N-5
+\end{array}\right.
+\end{equation*}
+A jacobina desse sistema não linear é
+\begin{equation*}
+J_F(u)= \begin{bmatrix}
+        3-\frac{1}{h}&\frac{1}{h}&0&0&0&\cdots&0\\
+        -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}+2u_ie^{-u_i^2}&-\frac{1}{h^2}+\frac{1}{2h}&0&0&\cdots&0\\
+              0&  -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}+2u_ie^{-u_i^2}&-\frac{1}{h^2}+\frac{1}{2h}&0&\cdots&0\\
+              \vdots&\vdots&\vdots&\vdots&\ddots&&\vdots\\
+              0&\cdots&0&0& -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}+2u_ie^{-u_i^2}&-\frac{1}{h^2}+\frac{1}{2h}\\
+              0&\cdots&0&0&0& 0&1
+       \end{bmatrix}
+\end{equation*}
+Vamos implementar um código usando o método de Thomas para resolver os sistemas tridiagonais.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#define N 11
+#define h (1./(N-1))
+
+//Método de Thomas para resolver Ax=y
+//x entra o vetor y e saí a solução x (N posições, i=0,....,N-1)
+//a entra a subdiagonal à esquerda de A (N-1 posições, i=1,...,N-1)
+//b entra a diagonal  (N posições, i=0,....,N-1)
+//c entra a subdiagonal à direita de A (N-1 posições, i=0,...,N-2)
+void Thomas(double x[], const double a[], const double b[], double c[]) 
+{
+  int i;
+
+  /*calculo de c[0]' e d[0]'*/
+  c[0] = c[0] / b[0];
+  x[0] = x[0] / b[0];
+
+
+  /* laço para calcular c' e d' */
+  for (i = 1; i < N; i++) 
+  {
+    double aux = 1.0/ (b[i] - a[i] * c[i - 1]);
+    c[i] = c[i] * aux;
+    x[i] = (x[i] - a[i] * x[i - 1]) * aux;
+  }
+
+  /* Calculando a solução */
+  for (i = N - 1; i >= 0; i--)
+    x[i] = x[i] - c[i] * x[i + 1];
+}
+//Função 
+//x é o ponto de entrada
+//f é o vetor com o resultado de f(x)
+void F(double *x,double *f)
+{
+  int i;
+  f[0]=3*x[0]+(x[1]-x[0])/h-10;
+  for (i=1;i<N-1;i++) f[i]=(-x[i+1]+2*x[i]-x[i-1])/(h*h)+(x[i+1]-x[i-1])/(2*h)-exp(-x[i]*x[i]);
+  f[N-1]=x[N-1]-5;
+}
+//Jacobiana
+//x é o ponto de entrada
+//a sai a subdiagonal à esquerda de A (N-1 posições, i=1,...,N-1)
+//b sai a diagonal  (N posições, i=0,....,N-1)
+//c sai a subdiagonal à direita de A (N-1 posições, i=0,...,N-2)
+void J(double *x,double *a,double *b,double *c)
+{ 
+  int i;
+  a[0]=0;
+  b[0]=3.-1./h;
+  c[0]=1./h;
+  for (i=1;i<N-1;i++)
+  {
+    a[i]=-1./(h*h)-1./(2*h);
+    b[i]=2./(h*h)+2*x[i]*exp(-x[i]*x[i]);
+    c[i]=-1./(h*h)+1./(2*h);
+  }
+  a[N-1]=0;
+  b[N-1]=1.;
+  c[N-1]=0;
+}
+//norma da diferença entre dois vetores
+double norma_max(double x[N])
+{
+  int i;
+  double norm=fabs(x[0]);
+  for (i=0;i<N;i++) if(norm<fabs(x[i])) norm=fabs(x[i]);
+  return norm;	
+}
+void main (void)
+{
+  int i;
+  double x0[N],x[N],d[N],a[N],b[N],c[N],tol=1e-10,*px0=x0,*px=x,*paux=NULL;
+  for (i=0;i<N;i++) x0[i]=0;
+  do
+  {
+    F(px0,d);
+    J(px0,a,b,c);
+    Thomas(d,a,b,c);
+    for (i=0;i<N;i++) *(px+i)=*(px0+i)-d[i];
+    for (i=0;i<N;i++) printf("%.12f  ",*(px+i));
+    printf("\n");
+    paux=px0;
+    px0=px;
+    px=paux;
+  }while(norma_max(d)>tol);
+  for (i=0;i<N;i++) printf("%.12f  ",*(px+i));
+}
+\end{verbatim}
+
+\section{Passagem de parâmetros na linha de comando}
+A função \verb|main| pode receber strings que são passadas na linha de comando. Usamos a linha 
+\begin{verbatim}
+main(int argc,char *argv[]),
+\end{verbatim}
+onde \verb|argc| é um inteiro que indica a quantidade de argumentos passados e \verb|argv| é um vetor contendo todas as strings.
+\begin{ex}\label{ex:argc-argv}Vamos implementar um código que entra com um nome e um sobrenome na linha de comando e imprime-os.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+printf("número de entradas=%d\n",argc);
+printf("executável=%s\n",argv[0]);
+printf("nome=%s\n",argv[1]);
+printf("sobrenome=%s\n",argv[2]);
+}
+\end{verbatim}
+Esse programa é executado com uma linha de comando da forma
+\begin{verbatim}
+./a.out Artur Avila
+\end{verbatim}
+e o resultado é
+\begin{verbatim}
+número de entradas=3
+executável=./a.out
+nome=Artur
+sobrenome=Avila
+\end{verbatim}
+
+Observações sobre o exemplo \ref{ex:argc-argv}:
+\begin{enumerate}
+ \item O números de entradas é 3 e não 2 (\verb|argc| tem valor 3).
+ \item \verb|argv[0]| armazena o executável.
+ \item O valor \verb|argc| não entra explicitamente na linha de comando, mas é calculado na execução.
+\end{enumerate}
+
+Algumas vezes entramos com strings contendo números e desejamos convertê-los para inteiros. Nesse caso, usamos a função \verb|int atoi(char *str)| da biblioteca \verb|<stdlib>|.
+\begin{ex}\label{ex:argc-argv-2}
+Implemente um programa que entre com dois números inteiros e retorna a soma.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[])
+{
+int i,soma;
+for (i=1;i<argc;i++) soma+=atoi(argv[i]);
+printf("soma=%d\n",soma);
+}
+\end{verbatim}
+Se desejamos entrar com números racionais, trocamos \verb|atoi| por \verb|atof|. Observe a versão do código do exemplo \ref{ex:argc-argv-2} usando números racionais:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[])
+{
+int i;
+double soma;
+for (i=1;i<argc;i++) soma+=atof(argv[i]);
+printf("soma=%f\n",soma);
+}
+\end{verbatim}
+
+\begin{ex}Implemente uma rotina para calcular a raíz de uma função pelo método de Newton passando o chute inicial e a tolerância na linha de comando e retornando a solução e o número de iterações necessárias (refazendo o exemplo \ref{ex_New_pont}, mas agora passando informações na linha de comando).
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+
+double f(double x)
+{
+  return cos(x)-x;
+}
+double df(double x)
+{
+  return -sin(x)-1.;
+}
+
+void Newton(double x0, double tol, double *xn, int *k)
+{
+  double dif;
+  *k=0;
+  do
+  {
+  (*k)++;
+  *xn=x0-f(x0)/df(x0);
+  dif=fabs(*xn-x0);
+  x0=*xn;
+  }while (dif>tol);
+}
+
+
+int main(int argc, char **argv)
+{
+  double x0,xn,tol;
+  x0=atof(argv[1]);
+  tol=atof(argv[2]);
+  int k;
+  Newton(x0,tol,&xn,&k);
+  printf("Sol=%f, iterações=%d\n",xn,k);
+}
+\end{verbatim}
+Experimente alguns chutes iniciais e tolerâncias tais como
+\begin{verbatim}
+./a.out 1 1e-10
+\end{verbatim}
+Nesse último programa usamos \verb|**argv| em vez de \verb|*argv[]|. De fato, as notações são equivalentes. Como discutido anteriormente, \verb|**| representa ponteiro de ponteiro. Especificamente aqui, temos um ponteiro que aponta para a lista de argumentos e cada um dos argumentos são strings representadas por seus ponteiros.
+\section{Recursão}
+Quando uma função chama ela mesma. 
+\begin{ex}Escreva uma função que imprime os $n$ primeiros números em ordem crescente.
+\end{ex}
+Primeiro vamos resolver o problema usando um laço de repetição
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+int main(int argc, char **argv)
+{
+  int i,N;
+  N=atoi(argv[1]);
+  for(i=0;i<=N;i++) printf("%d\n",i);
+} 
+\end{verbatim}
+Agora, vamos trocar o \verb|for| por uma função recursiva.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+void imprime(int i)
+{
+ 
+ if(i<0) return;
+ imprime(i-1);  
+ printf("%d\n",i);
+}
+
+int main(int argc, char **argv)
+{
+  int i,N;
+  N=atoi(argv[1]);
+  imprime(N); 
+}
+\end{verbatim}
+Observe no último programa que a função imprime chama ela mesma. Observe que a primeira linha dentro da função recursiva é o critério de parada. Isso é fundamental, pois caso contrário, a função seria executada até acabar a memória do computador. Vamos tentar entender o que faz a função \verb|imprime(3)|:
+\begin{itemize}
+ \item Quando chamamos \verb|imprime(3)|, temos \verb|i=3|, logo a função não para no primeiro \verb|if|.
+ \item Então a função chama \verb|imprime(2)| antes de imprimir.
+ \item O \verb|imprime(2)| se repete os passos do \verb|imprime(3)| e chama o \verb|imprime(1)|, também  antes de imprimir.
+ \item Depois \verb|imprime(0)| e \verb|imprime(-1)|. 
+ \item \verb|imprime(-1)| termina na primeira linha, pois \verb|-1<0|.
+ \item Ainda dentro do \verb|imprime(0)|, a função imprime \verb|printf("%d\n",0);|.
+ \item Uma vez que fecha o \verb|imprime(0)|, vai para o término da função \verb|imprime(1)| e escreve \verb|printf("%d\n",1);|.
+  \item Sucessivamente, o as funções \verb|imprime(2)| e \verb|imprime(3)| terminam com \verb|printf("%d\n",2);| e \verb|printf("%d\n",3);|
+\end{itemize}
+
+
+
+
+
+\section{Passagem de ponteiro para função}
+É possível enviar para uma funçao o endereço de outra função. O próprio nome da função é o endereço da função.
+\begin{ex}
+Implemente uma função que eleva outra função ao quadrado.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+double f(double x)
+{
+  return exp(-x);
+}
+double g(double x)
+{
+  return sin(x);
+}
+
+
+double Quad(double (*fun)(double),double x)
+{
+ return ((*fun)(x))*((*fun)(x));
+}
+
+
+void main (void)
+{
+double x=2;
+printf("f(%f)=%f\n",x,f(x));
+printf("g(%f)=%f\n",x,g(x));
+printf("(f(%f))^2=%f\n",x,Quad(f,x));
+printf("(g(%f))^2=%f\n",x,Quad(g,x));
+}
+\end{verbatim}
+
+\begin{ex}\label{ex:int_dup}
+Faça um código para calcular 
+$$
+\int_0^1f(t) dt,
+$$
+onde
+$$
+f(t)=\int_0^t \sin(t-\tau) e^{-\tau^2}d\tau.
+$$
+\end{ex}
+Vamos começar construindo uma rotina que imprime os pesos e abscissas de uma quadratura.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#define DEBUG
+void boole(double a,double b,int N,double *nodes, double *weights)
+{
+  int i;
+  for (i=0;i<N;i++) 
+  {
+    nodes[i]=a+ (b-a)*i/(N-1.0);
+  }
+  weights[0]=(b-a)*28/90.0/(N-1.0);
+  for (i=1;i<N;i+=4) 
+  {
+    weights[i]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+1]=4.0*12.0*(b-a)/90.0/(N-1.0);
+    weights[i+2]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+3]=4.0*7.0*(b-a)/45.0/(N-1.0);
+  }
+  weights[N-1]=28*(b-a)/90.0/(N-1.0);
+}
+
+
+void main (void)
+{
+  int i,N=13;
+  if (N%4!=1) 
+  {
+    printf("o número de pontos da quadratura deve ser da forma 4N+1\n");
+    return;
+  }
+  double a=0,b=1,x[N],w[N];
+  boole(a,b,N,x,w);
+#ifdef DEBUG
+  for (i=0;i<N;i++) 
+  {
+  printf("x[%d]=%f,w[%d]=%f\n",i,x[i],i,w[i]);
+  }
+#endif
+}
+\end{verbatim}
+Agora vamos integrar algumas funções usando alocamento dinâmico de memória.
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+void boole(double a,double b,int N,double *nodes, double *weights)
+{
+  int i;
+  for (i=0;i<N;i++) 
+  {
+    nodes[i]=a+(b-a)*i/(N-1.0);
+  }
+  weights[0]=(b-a)*28/90.0/(N-1.0);
+  for (i=1;i<N;i+=4) 
+  {
+    weights[i]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+1]=4.0*12.0*(b-a)/90.0/(N-1.0);
+    weights[i+2]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+3]=4.0*7.0*(b-a)/45.0/(N-1.0);
+  }
+  weights[N-1]=28*(b-a)/90.0/(N-1.0);
+}
+
+
+void main (void)
+{
+  int i,N=13;
+  if ((N%4)!=1) 
+  {
+    printf("o número de pontos da quadratura deve ser da forma 4N+1\n");
+    return;
+  }
+  double a=0,b=1,*x,*w;
+  x=malloc(N*sizeof(double));
+  w=malloc(N*sizeof(double));
+  if ((x==NULL)||(w==NULL))
+  {
+    printf("erro ao alocar memória\n");
+    return;
+  }
+  boole(a,b,N,x,w);
+//integral de 1 no intervalo [0,1];
+  double I=0;
+  for (i=0;i<N;i++) I+=w[i];
+  printf("A integral de 1 é %f\n",I);
+
+//integral de x no intervalo [0,1];
+  I=0;
+  for (i=0;i<N;i++) I+=w[i]*x[i];
+  printf("A integral de x é %f\n",I);
+
+//integral de x^2 no intervalo [0,1];
+  I=0;
+  for (i=0;i<N;i++) I+=w[i]*x[i]*x[i];
+  printf("A integral de x^2 é %f\n",I);
+
+//integral de x^3 no intervalo [0,1];
+  I=0;
+  for (i=0;i<N;i++) I+=w[i]*x[i]*x[i]*x[i];
+  printf("A integral de x^3 é %f\n",I);
+}
+\end{verbatim}
+Ocorre que a integral está com um número fixo de pontos. Então, vamos implementar rotinas que refinam até a convergência.
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+void boole(double a,double b,int N,double *nodes, double *weights)
+{
+  int i;
+  for (i=0;i<N;i++) 
+  {
+    nodes[i]=a+(b-a)*i/(N-1.0);
+  }
+  weights[0]=(b-a)*28/90.0/(N-1.0);
+  for (i=1;i<N;i+=4) 
+  {
+    weights[i]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+1]=4.0*12.0*(b-a)/90.0/(N-1.0);
+    weights[i+2]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+3]=4.0*7.0*(b-a)/45.0/(N-1.0);
+  }
+  weights[N-1]=28*(b-a)/90.0/(N-1.0);
+}
+double f(double x)
+{
+  return exp(-x);
+}
+
+void main (void)
+{
+  int i,N=5;
+  if ((N%4)!=1) 
+  {
+    printf("o número de pontos da quadratura deve ser da forma 4N+1\n");
+    return;
+  }
+  double a=0,b=1,*x,*w,tol=1e-10;
+  x=malloc(N*sizeof(double));
+  w=malloc(N*sizeof(double));
+  if ((x==NULL)||(w==NULL))
+  {
+    printf("erro ao alocar memória\n");
+    return;
+  }
+  boole(a,b,N,x,w);
+//integral de 1 no intervalo [0,1];
+  int cont=0;
+  double I1=0,I2=0,erro;
+  for (i=0;i<N;i++) I1+=w[i]*f(x[i]);
+  do
+  {
+  cont++;
+  N=2*N-1;
+  x=realloc(x,N*sizeof(double));
+  w=realloc(w,N*sizeof(double));
+  boole(a,b,N,x,w);
+  I2=0;
+  for (i=0;i<N;i++) I2+=w[i]*f(x[i]);
+  erro=fabs(I2-I1);
+  printf("erro=%.12f\n",erro);
+  I1=I2;
+  }while (erro>tol);
+  printf("A integral de f(x) é %f e foi calculado com %d iterações\n",I2,cont);
+}
+\end{verbatim}
+Agora, vamos resolver o problema proposto, começando pela implementação de $f(t)$:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+void boole(double a,double b,int N,double *nodes, double *weights)
+{
+  int i;
+  for (i=0;i<N;i++) 
+  {
+    nodes[i]=a+(b-a)*i/(N-1.0);
+  }
+  weights[0]=(b-a)*28/90.0/(N-1.0);
+  for (i=1;i<N;i+=4) 
+  {
+    weights[i]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+1]=4.0*12.0*(b-a)/90.0/(N-1.0);
+    weights[i+2]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+3]=4.0*7.0*(b-a)/45.0/(N-1.0);
+  }
+  weights[N-1]=28*(b-a)/90.0/(N-1.0);
+}
+double integrando(double tau, double *t)
+{
+  return sin(*t-tau)*exp(-tau*tau);
+}
+
+double f(double t)
+{
+  int i,N=5;
+  if ((N%4)!=1) 
+  {
+    printf("o número de pontos da quadratura deve ser da forma 4N+1\n");
+    return;
+  }
+  double a=0,b=1,*x,*w,tol=1e-10;
+  x=malloc(N*sizeof(double));
+  w=malloc(N*sizeof(double));
+  if ((x==NULL)||(w==NULL))
+  {
+    printf("erro ao alocar memória\n");
+    return;
+  }
+  boole(a,b,N,x,w);
+  int cont=0;
+  double I1=0,I2=0,erro;
+  for (i=0;i<N;i++) I1+=w[i]*integrando(x[i],&t);
+  do
+  {
+  cont++;
+  N=2*N-1;
+  x=realloc(x,N*sizeof(double));
+  w=realloc(w,N*sizeof(double));
+  boole(a,b,N,x,w);
+  I2=0;
+  for (i=0;i<N;i++) I2+=w[i]*integrando(x[i],&t);
+  erro=fabs(I2-I1);
+  I1=I2;
+  }while (erro>tol);
+  return I2;
+}
+
+void main (void)
+{
+  printf("f(1)=%f\n",f(1));
+}
+\end{verbatim}
+Agora, vamos fazer a última integral:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+void boole(double a,double b,int N,double *nodes, double *weights)
+{
+  int i;
+  for (i=0;i<N;i++) 
+  {
+    nodes[i]=a+(b-a)*i/(N-1.0);
+  }
+  weights[0]=(b-a)*28/90.0/(N-1.0);
+  for (i=1;i<N;i+=4) 
+  {
+    weights[i]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+1]=4.0*12.0*(b-a)/90.0/(N-1.0);
+    weights[i+2]=4.0*16.0*(b-a)/45.0/(N-1.0);		
+    weights[i+3]=4.0*7.0*(b-a)/45.0/(N-1.0);
+  }
+  weights[N-1]=28*(b-a)/90.0/(N-1.0);
+}
+double integrando(double tau, double *t)
+{
+  return sin(*t-tau)*exp(-tau*tau);
+}
+
+double f(double t)
+{
+  int i,N=5;
+  if ((N%4)!=1) 
+  {
+    printf("o número de pontos da quadratura deve ser da forma 4N+1\n");
+    return;
+  }
+  double a=0,b=t,*x,*w,tol=1e-10;
+  x=malloc(N*sizeof(double));
+  w=malloc(N*sizeof(double));
+  if ((x==NULL)||(w==NULL))
+  {
+    printf("erro ao alocar memória\n");
+    return;
+  }
+  boole(a,b,N,x,w);
+  int cont=0;
+  double I1=0,I2=0,erro;
+  for (i=0;i<N;i++) I1+=w[i]*integrando(x[i],&t);
+  do
+  {
+  cont++;
+  N=2*N-1;
+  x=realloc(x,N*sizeof(double));
+  w=realloc(w,N*sizeof(double));
+  boole(a,b,N,x,w);
+  I2=0;
+  for (i=0;i<N;i++) I2+=w[i]*integrando(x[i],&t);
+  erro=fabs(I2-I1);
+  I1=I2;
+  }while (erro>tol);
+  free(x);
+  free(w);
+  return I2;
+}
+
+void main (void)
+{
+   int i,N=5;
+  if ((N%4)!=1) 
+  {
+    printf("o número de pontos da quadratura deve ser da forma 4N+1\n");
+    return;
+  }
+  double a=0,b=1,*x,*w,tol=1e-10;
+  x=malloc(N*sizeof(double));
+  w=malloc(N*sizeof(double));
+  if ((x==NULL)||(w==NULL))
+  {
+    printf("erro ao alocar memória\n");
+    return;
+  }
+  boole(a,b,N,x,w);
+  int cont=0;
+  double I1=0,I2=0,erro;
+  for (i=0;i<N;i++) I1+=w[i]*f(x[i]);
+  do
+  {
+  cont++;
+  N=2*N-1;
+  x=realloc(x,N*sizeof(double));
+  w=realloc(w,N*sizeof(double));
+  boole(a,b,N,x,w);
+  I2=0;
+  for (i=0;i<N;i++) I2+=w[i]*f(x[i]);
+  erro=fabs(I2-I1);
+  I1=I2;
+  }while (erro>tol);
+  free(x);
+  free(w);
+  printf("O valor da integral é %f\n",I2);
+}
+\end{verbatim}
+Observe que existem várias linhas do código repetida. Isso pode ser melhorado quando usamos ponteiro para função. Vamos calcular $f(1)$ com essa ferramenta:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+double Boole(double (*f)(double, double),double a,double b, int N,double *param)
+{
+  int i;
+  double h=(b-a)/(4*N),Int=0,t=param[0];
+  
+  Int=14./45.*(*f)(a,t);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*(*f)(a+h,t);
+    Int+=24./45.*(*f)(a+2*h,t);
+    Int+=64./45.*(*f)(a+3*h,t);
+    Int+=28./45.*(*f)(a+4*h,t);
+    a+=4*h;
+  }
+  Int-=14./45.*(*f)(a,t);
+return h*Int;
+}
+double integrando(double tau, double t)
+{
+  return sin(t-tau)*exp(-tau*tau);
+}
+void main(void)
+{
+double param[1]={1};
+printf("f(1)=%f\n",Boole(integrando,0,1,5,param) );
+}
+\end{verbatim}
+Agora, vamos resolver o problema proposto:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+double Boole(double (*f)(double, double),double a,double b, int N,double *param)
+{
+  int i;
+  double h=(b-a)/(4*N),Int=0,t=param[0];
+  
+  Int=14./45.*(*f)(a,t);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*(*f)(a+h,t);
+    Int+=24./45.*(*f)(a+2*h,t);
+    Int+=64./45.*(*f)(a+3*h,t);
+    Int+=28./45.*(*f)(a+4*h,t);
+    a+=4*h;
+  }
+  Int-=14./45.*(*f)(a,t);
+return h*Int;
+}
+double integrando(double tau, double t)
+{
+  return sin(t-tau)*exp(-tau*tau);
+}
+double f(double t,double tau)
+{
+  int N=5;
+  double I1=0,I2=0,erro=0,a=0,b=t,tol=1e-10,param[1]={t};
+  I1=Boole(integrando,a,b,N,param);
+  int cont=0;
+  do
+  {
+  cont++;
+  N=2*N-1;
+  I2=Boole(integrando,a,b,N,param);
+  erro=fabs(I2-I1);
+  I1=I2;
+  }while (erro>tol);
+  return I2;
+}
+
+void main(void)
+{
+  int N=5;
+  double I1=0,I2=0,erro=0,a=0,b=1,tol=1e-10,param[1]={0};
+  I1=Boole(f,a,b,N,param);
+  int cont=0;
+  do
+  {
+  cont++;
+  N=2*N-1;
+  I2=Boole(f,a,b,N,param);
+  erro=fabs(I2-I1);
+  I1=I2;
+  }while (erro>tol);
+  printf("O valor da integral é %f\n",I2);
+}
+\end{verbatim}
+
+\section{Exercícios}
+\begin{exer}
+Refaça os exercícios \ref{exerc_8.1}, \ref{exerc_8.2} e \ref{exerc_8.3} usando troca de ponteiros na parte iterativa.
+\end{exer}
+
+\begin{exer}
+ Implemente uma função que entra um vetor com $N$ posições e devolve o máximo e o mínimo valor.
+\end{exer}
+\begin{exer}
+Use a estrutura trabalhada no exemplo \ref{ex_New_pont} para refazer os exercícios \ref{exerc5.1} e \ref{exerc5.1.1}
+\end{exer}
+
+\begin{exer}A eliminação gaussiana (ou escalonamento), é um método para resolver sistemas lineares que consiste em manipular o sistema através de determinadas operações elementares, transformando-o em um sistema triangular. A solução pode ser obtida via substituição regressiva.
+\begin{enumerate}
+\item multiplicação de um linha por uma constante não nula.
+\item substituição de uma linha por ela mesma somada a um múltiplo de outra linha.
+\item permutação de duas linhas.
+\end{enumerate}
+\begin{itemize}
+ \item[a)] Implemente um programa que resolve sistema lineares por eliminação gaussiana.
+ \item[b)] Implemente um programa que resolve sistema lineares por eliminação gaussiana com pivotamento parcial. A eliminação gaussiana com pivotamento parcial consiste em fazer uma permutação de linhas para escolher o maior pivô (em módulo) a cada passo.
+\end{itemize}
+Para ajudar o programador, segue um sistema linear 3x3 retirado do livro colaborativo www.ufrgs.br/numerico 
+\begin{eqnarray*}
+  x+y+z  &=& 1\\
+  2x+y-z &=& 0\\
+  2x+2y+z &=& 1
+\end{eqnarray*}
+A solução via eliminação gaussiana com pivotamento parcial segue os seguintes passos:
+\begin{eqnarray*}
+      \begin{bmatrix}
+      1 &1&  1&1\\
+      2 &1& -1&0\\
+      2 & 2 &1&1
+    \end{bmatrix}
+    &\sim&
+    \begin{bmatrix}
+      2 &1& -1&0\\
+      1 &1&  1&1\\
+      2 &2&  1&1
+    \end{bmatrix}\\
+    &\sim&
+    \begin{bmatrix}
+      2 &1& -1&0\\
+      0 &1/2& 3/2&1\\
+      0 & 1 &2&1
+    \end{bmatrix}\\
+    &\sim&
+    \begin{bmatrix}
+      2 &1& -1&0\\
+      0 & 1 &2&1\\
+      0 &1/2& 3/2&1
+    \end{bmatrix}\\
+    &\sim&
+    \begin{bmatrix}
+      2 &1& -1&0\\
+      0 & 1 &2&1\\
+      0 &0& 1/2&1/2
+    \end{bmatrix}
+\end{eqnarray*}
+Por substituição regressiva, temos $1/2z=1/2$, ou seja, $z=1$. Substituímos na segunda equação e temos $y+2z=1$, ou seja, $y=-1$ e, finalmente $2x+y-z=0$, resultando em $x=1$.
+\end{exer}
+
+\begin{exer}As aproximações de segunda ordem para a derivada primeira são obtidas pelas seguintes fórmulas
+\begin{itemize}
+ \item[a)]Progressiva: $\displaystyle f'(x_0)\approx \frac{1}{2h}\left[-3f(x_0)+4f(x_{0}+h)
+-f(x_{0}+2h)\right]\\$
+ \item[b)]Central: $\displaystyle f'(x_0)\approx\frac{1}{2h}\left[f(x_{0}+h)-f(x_0-h)\right]$
+ \item[c)]Regressiva: $\displaystyle f'(x_0)\approx \frac{1}{2h}\left[f(x_0-2h)-4f(x_{0}-h)
++3f(x_{0})\right]$
+\end{itemize}
+Refaça o exemplo \ref{ex_PVC_TDMA} usando diferenças de segunda ordem para todas as derivadas e o algorítmo de eliminação Gaussiana para resolver o sistema linear.
+\end{exer}
+\begin{exer} Encontre uma aproximação numérica para o seguinte problema não-linear de três equações e três incógnitas:
+\begin{eqnarray*}
+2x_1-x_2&=&\cos(x_1)\\
+-x_1+2x_2-x_3&=&\cos(x_2)\\
+-x_2+	x_3&=&\cos(x_3)
+\end{eqnarray*}
+Partindo das seguintes aproximações iniciais:
+\begin{itemize}
+\item[a)] $x^{(0)}=[1,~1,~1]^T$
+\item[b)] $x^{(0)}=[-0,5,~-2,~-3]^T$
+\item[c)] $x^{(0)}=[-2,~-3,~-4]^T$
+\item[d)] $x^{(0)}=[0,~0,~0]^T$
+\end{itemize}
+\end{exer}
+
+\begin{exer}{\label{sis_nao_linear}}  Considere o seguinte sistema de equações não-lineares:
+\begin{eqnarray}
+x_1-x_2&=&0\nonumber\\
+-x_{j-1}+5(x_j+x_j^3)-x_{j+1}&=&10\exp(-j/3),~~ 2\leq j \leq 10\nonumber\\
+x_{11}&=&1
+\end{eqnarray}
+Implemente um código para encontrar a única solução deste problema pelo método de Newton.
+
+\end{exer}
+
+
+\begin{exer}\label{exerc_14.1}Resolva numericamente o problema de valor de contorno para a equação de calor no estado estacionário com um termo não linear de radiação
+$$\left\{\begin{array}{l}-u_{xx}=100- \frac{u^4}{10000},~~ 0<x<2.\\
+u(0)=0\\
+u(2)=10\end{array}
+\right.
+$$
+usando o método de diferenças finitas.
+\end{exer}
+
+
+\begin{exer}Resolva numericamente o problema de valor de contorno para a equação de calor no estado estacionário com um termo não linear de radiação e um termo de convecção:
+$$\left\{\begin{array}{l}-u_{xx}+3u_x=100- \frac{u^4}{10000},~~ 0<x<2.\\
+u'(0)=0\\
+u(2)=10\end{array}
+\right.
+$$
+usando o método de diferenças finitas.
+\end{exer}
+
+\begin{exer} Resolva numericamente o problema de valor de contorno
+$$\left\{\begin{array}{l}-u''+2u'=e^{-x}- \frac{u^2}{100},~~ 1<x<4.\\
+u'(1)+u(1)=2\\
+u'(4)=-1\end{array}
+\right.
+$$
+usando o método de diferenças finitas.
+\end{exer}
+
+
+\begin{exer}
+Implemente o cálculo da fatorial de $n$ de várias formas:
+\begin{enumerate}
+ \item Entre com $n$ no \verb|scanf| e use um \verb|for|.
+ \item Entre com $n$ na linha de comando
+ \item Construa uma função recursiva $n!=n(n-1)!$ (não use \verb|for|).
+ \end{enumerate}
+\end{exer}
+\begin{exer}
+Repita o exercício anterior para $x^n$, $n\geq 0$.
+\end{exer}
+
+\begin{exer}\label{edo1}O método de Runge-Kutta quarta ordem clássico para resolver o PVI
+\begin{eqnarray*}
+u'&=&f(t,u)\\
+u(0)&=&u_0
+\end{eqnarray*}
+é dado pela recursão
+\begin{eqnarray*}
+k_1&=&hf\left(t^{(n)},u^{(n)}\right)\\
+k_2&=&hf\left(t^{(n)}+h/2,u^{(n)}+k_1/2\right)\\
+k_3&=&hf\left(t^{(n)}+h/2,u^{(n)}+k_2/2\right)\\
+k_4&=&hf\left(t^{(n)}+h,u^{(n)}+k_3\right)\\
+u^{(n+1)}&=&u^{(n)}+\frac{k_1+2k_2+2k_3+k_4}{6}
+\end{eqnarray*}
+
+Implemente um código em C com a algorítmo acima para resolva o sistema para o oscilador não linear de Van der Pol dado por
+\begin{equation} u''(t) - \alpha (A-u(t)^2)u'(t) + w_0^2u(t)=0 \end{equation}
+onde $A$, $\alpha$ e $w_0$ são constantes positivas. Encontre a frequência e a amplitude de oscilações quando $w_0=1$, $\alpha=.1$ e $A=10$ (teste diversas condições iniciais).
+
+Observação: 
+\begin{itemize}
+ \item Embora o oscilador seja de segunda ordem, você pode fazer uma mudança de variável e escrevê-lo com um sistema de primeira ordem.
+ \item Entre com os parâmetros tempo final e o número de intervalos na linha de comando.
+\end{itemize}
+
+\end{exer}
+
+\begin{exer}\label{edo2}Resolva o modelo simplificado de FitzHugh-Nagumo para o potencial elétrico sobre a membrana de um neurônio:
+\begin{eqnarray*}
+\frac{d V}{dt}& = &  V-V^3/3 - W +  I  \\
+\frac{d W}{dt} & = & 0,08(V+0,7 - 0,8W)
+\end{eqnarray*}
+onde $I$ é a corrente de excitação. 
+\begin{itemize}
+\item Encontre o único estado estacionário $\left(V_0,W_0\right)$ com $I=0$.
+\item Resolva numericamente o sistema com condições iniciais dadas por $\left(V_0,W_0\right)$ e $I=e^{-t/200}$.
+\end{itemize}
+\end{exer}

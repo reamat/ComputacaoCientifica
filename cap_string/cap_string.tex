@@ -1,0 +1,210 @@
+
+\chapter{Strings}
+\section{Strings}
+Strings são vetores de \verb|char|.
+\begin{ex}Alguns testes com strings.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+
+main (void)
+{
+  char nome[7]="Artur";
+  char sobrenome[10]={'A','v','i','l','a'};
+
+  printf("O nome do matemático é %s %s\n",nome,sobrenome);
+  printf("\n");
+  int i;
+  for(i=0;i<5;i++) printf("%c\n",nome[i]);
+  printf("\n");
+  for(i=0;i<5;i++) printf("%c\n",sobrenome[i]);
+}
+\end{verbatim}
+
+Observe que usamos \verb|%s| para imprimir um string e \verb|%c| para imprimir um caractere.
+
+\begin{ex}Faça um programa que lê nome e o sobrenome e imprime-os.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+
+main (void)
+{
+  char nome[20],sobrenome[20];
+
+  printf("Digite seu nome\n");
+  scanf("%s",nome);
+  printf("Digite seu sobrenome\n");
+  scanf("%s",sobrenome);
+  printf("\n%s",nome);
+  printf(" %s\n",sobrenome);
+}
+\end{verbatim}
+Existem várias função para manipulação de strings, tais como
+\begin{itemize}
+\item \verb|strlen(string)| conta o número de caracteres e retorna um inteiro positivo.
+\item \verb|strcpy(string1,string2)| copia string2 para string1.
+\item \verb|strcat(string1,string2)| coloca string2 imediatamente após string1.
+\item \verb|strcmp(string1,string2)| compara as strings alfabeticamente e retorna verdadeiro ou falso (1 ou 0).
+\end{itemize}
+Essas funções não são nativas em C e precisam da biblioteca \verb|string.h| para funcionar.
+\begin{ex}Faça um programa que lê nome e o sobrenome e imprime o número de letras de cada um.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+main (void)
+{
+  char nome[20],sobrenome[20];
+
+  printf("Digite seu nome\n");
+  scanf("%s",nome);
+  printf("Digite seu sobrenome\n");
+  scanf("%s",sobrenome);
+  printf("\n%s",nome);
+  printf(" %s\n",sobrenome);
+  printf("Seu nome tem %d letras\n",(int) strlen(nome));
+  printf("Seu sobrenome tem %d letras\n",(int) strlen(sobrenome));
+}
+\end{verbatim}
+\begin{ex}Escreva um código que lê uma string e inverte os caracteres.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <string.h>
+
+char *strinv(char *s)
+{
+  int i,j,k=strlen(s);
+  char aux;
+  for (i=0,j=k-1;i<j;i++,j--)
+    {
+    aux=s[i];
+    s[i]=s[j];
+    s[j]=aux;
+    }
+  return s;
+}
+
+int main(void)
+{
+  char nome[6]="Artur";
+  strinv(nome);
+  printf("O nome invertido é %s\n",nome);
+}
+\end{verbatim}
+
+\begin{ex}
+Escreva um programa que lê a idade de um gato e escreve-o por extenso. Suponha que o gato viva no máximo 39 anos. 
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+int unidades(char idade[],char resposta[])
+{
+  if (idade[0]=='0') {strcpy(resposta,"zero"); return 1;}
+  if (idade[0]=='1') {strcpy(resposta,"um"); return 1;}
+  if (idade[0]=='2') {strcpy(resposta,"dois"); return 1;}
+  if (idade[0]=='3') {strcpy(resposta,"três"); return 1;}
+  if (idade[0]=='4') {strcpy(resposta,"quatro"); return 1;}
+  if (idade[0]=='5') {strcpy(resposta,"cinco"); return 1;}
+  if (idade[0]=='6') {strcpy(resposta,"seis"); return 1;}
+  if (idade[0]=='7') {strcpy(resposta,"sete"); return 1;}
+  if (idade[0]=='8') {strcpy(resposta,"oito"); return 1;}
+  if (idade[0]=='9') {strcpy(resposta,"nove"); return 1;}
+  return 0;
+}
+int dezenas(char idade[],char resposta[])
+{
+  if (strcmp(idade,"10")==0) {strcpy(resposta,"dez"); return 1;}
+  if (strcmp(idade,"11")==0) {strcpy(resposta,"onze"); return 1;}
+  if (strcmp(idade,"12")==0) {strcpy(resposta,"doze"); return 1;}
+  if (strcmp(idade,"13")==0) {strcpy(resposta,"treze"); return 1;}
+  if (strcmp(idade,"14")==0) {strcpy(resposta,"quatorze"); return 1;}
+  if (strcmp(idade,"15")==0) {strcpy(resposta,"quize"); return 1;}
+  if (strcmp(idade,"16")==0) {strcpy(resposta,"dezesseis"); return 1;}
+  if (strcmp(idade,"17")==0) {strcpy(resposta,"dezessete"); return 1;}
+  if (strcmp(idade,"18")==0) {strcpy(resposta,"dezoito"); return 1;}
+  if (strcmp(idade,"19")==0) {strcpy(resposta,"dezenove"); return 1;}
+  if (idade[0]=='0') return 0;
+  if (idade[0]=='2') 
+  {
+    if (strcmp(idade,"20")==0) {strcpy(resposta,"vinte"); return 1;}
+    char unidade[2]={idade[1]},resp[10];
+    strcpy(resposta,"vinte e ");
+    if (unidades(unidade,resp)==1)
+    {
+    strcat(resposta,resp);    
+    return 1;
+    }
+  }
+  if (idade[0]=='3') 
+  {
+    if (strcmp(idade,"30")==0) {strcpy(resposta,"trinta"); return 1;}
+    char unidade[2]={idade[1]},resp[10];
+    strcpy(resposta,"trinta e ");
+    if (unidades(unidade,resp)==1)
+    {
+    strcat(resposta,resp);    
+    return 1;
+    }
+  }
+   
+
+
+
+  return 0;
+}
+
+
+int main (void)
+{
+  char idade[4]="",resposta[30]="";
+
+  printf("Digite a idade do gato\n");
+  scanf("%s",idade);
+  if (strlen(idade)==1)
+  {
+    if (unidades(idade,resposta)==1)
+    {    
+      if ((idade[0]=='1')||(idade[0]=='0')) {printf("A idade é %s ano\n",resposta); return 0;}
+      else {printf("A idade é %s anos\n",resposta); return 0;}
+    }
+    else    
+    {
+    printf("Idade inválida\n"); 
+    return 0;
+    }
+  }
+  if (strlen(idade)==2)
+  {
+    if (dezenas(idade,resposta)==1)
+    {    
+    printf("A idade é %s anos\n",resposta); 
+    return 0;
+    }
+    else    
+    {
+    printf("Idade inválida\n"); 
+    return 0;
+    }
+  }
+printf("Idade inválida\n"); 
+}
+\end{verbatim}
+
+\section{Exercícios}
+\begin{exer}Escreva um programa que lê uma string \verb|s| e conta quantas vezes aparece um caractere \verb|ch|: \verb|int strcount(char *s, char ch)|.
+\end{exer}
+\begin{exer}Escreva um programa que lê a idade de uma pessoa e escreve-o por extenso. Suponha que uma pessoa viva no máximo 129 anos. 
+\end{exer}
+\begin{exer}Escreva um programa que lê dois números correspondente ao valor de um cheque (reais e centavos) e escreve-o por extenso. Suponha que o valor máximo de um cheque seja $R\$9999,99$. 
+\end{exer}

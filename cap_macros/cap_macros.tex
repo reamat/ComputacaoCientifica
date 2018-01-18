@@ -1,0 +1,207 @@
+
+\chapter{Macros e Pré-processamento}
+\section{Macros}
+São diretivas do pré-processamento que permitem substituir porções de código antes da compilação. As instruções do pré-processamento são seguidas do operador \verb|#|. 
+\begin{itemize}
+ \item[a)] \verb|#define cod exp| substitui o \verb|cod| por \verb|verb|.
+ \item[b)] \verb|#include <cod.h>| inclui o código da biblioteca \verb|cod.h|.  Essa sintaxe vale para as biliotecas padrão.
+ \item[c)] \verb|#include "home/fulano/aula/cod.h"| inclui o código da biblioteca \verb|cod.h|. Essa sintaxe vale para bibliotecas próprias salva com o nome \verb|cod.h| na pasta \verb|home/fulano/aula/|.
+\end{itemize}
+\begin{ex}
+Implemente uma biblioteca com uma função que troca \verb|x| e \verb|y|. 
+\end{ex}
+Salvamos um arquivo com nome \verb|lib.h| com as seguintes linhas:
+\begin{verbatim}
+//lib.h
+void troca(double *a,double *b)
+{
+double aux;
+aux=*a;
+*a=*b;
+*b=aux;
+}
+\end{verbatim}
+Depois, salvamos um arquivo com o nome teste.c com as linhas:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "lib.h"
+
+#define Mult(x,y) (x)*(y)
+
+void main (int argc,char **argv)
+{
+  if (argc!=3)
+  {
+    printf("Digite dois números\n");
+    return;
+  }
+  double x=atof(argv[1]);
+  double y=atof(argv[2]);
+  printf("x=%f, y=%f,  xy=%f\n",x,y,Mult(x,y));
+  troca(&x,&y);
+  printf("x=%f, y=%f,  xy=%f\n",x,y,Mult(x,y));
+}
+\end{verbatim}
+
+\begin{ex}
+Várias implementações da função mínimos entre dois números.
+\end{ex}
+Primeiro implementamos um a biblioteca com três tipos de função mínimo:
+\begin{verbatim}
+//salva como lib.h
+double Min1(double a,double b)
+{
+if (a<b) return a;
+else return b;
+}
+
+void Min2(double *a,double b)
+{
+if (b<*a) *a=b;
+}
+
+double Min3(double a,double b)
+{
+return a<b?a:b;
+}
+\end{verbatim}
+Depois, implementamos um código que inclui a primeira biblioteca:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "lib.h"
+
+#define Min4(a,b) ((a)<(b))?(a):(b)
+
+void main (int argc,char **argv)
+{
+  double x=2,y=3;
+  printf("Min1(%f,%f)=%f\n",x,y,Min1(x,y));
+  printf("Min3(%f,%f)=%f\n",x,y,Min3(x,y));
+  printf("Min4(%f,%f)=%f\n",x,y,Min4(x,y));
+  Min2(&x,y);
+  printf("Min4=%f\n",x);
+}
+\end{verbatim}
+Observe a funcionamento da linha \verb|return a<b?a:b;| na função \verb|Min3|. Essa é uma forma de escrever a condição
+\begin{verbatim}
+if (a<b) return a;
+else return b;
+\end{verbatim}
+A expressão \verb|a<b?a:b| devolve o valor do teste: Se \verb|(a<b)| devolve \verb|a|, senão devolve \verb|b|. O macro \verb|#define Min4(a,b) ((a)<(b))?(a):(b)| também calcula o mínimo entre \verb|a| e \verb|b|. Um macro está escrito em uma única linha que inicia com \verb|#|. Se a expressão for muito grande e você precisar de duas linhas, use o operador continuidade \verb|\|:
+\begin{verbatim}
+#define Min4(a,b) ((a)<(b))?\
+                        (a):\
+                        (b)
+\end{verbatim}
+
+\section{Compilação condicional}
+Quando não queremos compilar um pedaço de código, podemos usar a opção comentar \verb|//| ou \verb|/* */|. Mas as vezes, queremos mais de uma versão do código, compilando pedaços segundo uma condição que escolhemos. Usamos a sintaxe
+\begin{verbatim}
+#if condicao_1
+  instrucao_1
+#elif condicao_2 
+  instrucao_2
+#else 
+  instrucao_padrao
+#endif
+\end{verbatim}
+\begin{ex}
+Faça um programa com dois \verb|main()|, um curto para fazer DEBUG e outro longo com um código que some $n$ números.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+#define DEBUG 1
+
+#if (DEBUG==1)
+void main (int argc,char **argv)
+{
+  double soma=0;
+  int i;
+  for (i=1;i<argc;i++) soma+=atof(argv[i]);
+  printf("A soma é =%f\n",soma);
+}
+
+#else
+void main (int argc,char **argv)
+{
+  printf("Entrou com %d números\n ",argc-1);
+}
+#endif
+\end{verbatim}
+
+
+Também podemos usar as diretivas \verb|#ifdef|, \verb|#ifndef| e \verb|#undef| para escolher um pedaço de código na compilação. A diretiva \verb|#ifdef| verifica se um determinado símbolo está definido, \verb|#ifndef| verifica que um determinado símbolo não está definido e \verb|#undef| retira a definição de um símbolo.
+\begin{ex}
+Faça um programa que soma $n$ números de duas formas:
+\begin{itemize}
+ \item Se ligar a condição linha de comando, os números são lidos da linha de comando.
+ \item senão, os números são lidos da tela com \verb|scanf|.
+ \end{itemize}
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+//#define DEBUG 
+
+#ifdef DEBUG
+void main (int argc,char **argv)
+{
+#endif
+#ifndef DEBUG
+void main (void)
+{
+#endif
+  double soma=0;
+  int i;
+#ifndef DEBUG
+  int n;
+  printf("Digite quantos números você vai somar\n");
+  scanf("%d",&n);
+  float v[n];
+  printf("Digite os números\n");
+  for (i=0;i<n;i++) scanf("%f",&v[i]);
+  double argc=n+1;
+#endif
+#ifdef DEBUG
+  float v[argc-1];
+  for (i=0;i<argc-1;i++) v[i]=atof(argv[i+1]);
+#endif
+  for (i=0;i<argc-1;i++) soma+=v[i];
+  printf("A soma é =%f\n",soma);
+}
+\end{verbatim}
+
+O operador \verb|defined()| pode ser usado no teste da compilação condicional: \verb|#ifdef DEBUG| é o mesmo que \verb|#if defined(DEBUG)|. É possível trabalhar com mais de um símbolo, por exemplo, \verb|#if defined(DEBUG1) && !defined(DEBUG2)|, que compila quando \verb|DEBUG1| e \verb|DEBUG2| não está.
+
+\section{assert()}
+É uma macro da biblioteca \verb|assert.h| que entra um valor lógico, 0 ou 1. No caso de verdadeiro, não acontece nada. No caso falso, a função imprime o nome do arquivo fonte, a linha do arquivo contendo a chamada para a macro, o nome da função que contém a chamada e o texto da expressão que foi avaliada.
+\begin{ex}
+Implemente um código que lê $n$ números na linha de comando e imprime a soma. No caso de não entrar número, abortar a execução.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
+void main (int argc,char **argv)
+{
+  assert(argc-1);
+  double soma=0;
+  int i;
+  for (i=1;i<argc;i++) soma+=atof(argv[i]);
+  printf("A soma é =%f\n",soma);
+}
+\end{verbatim}
+
+\section{Exercícios}
+\begin{exer}Calcule as raízes da função
+$f(x)=x-\cos(x)$
+usando os métodos de Newton e Secantes. Use \verb|#ifdef - #endif| para programar as duas opções. Veja os algorítmos nos exercícios \ref{exerc5.1} e \ref{exerc5.1.1}.
+\end{exer}

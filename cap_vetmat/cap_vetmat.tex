@@ -1,0 +1,587 @@
+
+\chapter{Vetores e matrizes}
+\section{Vetores}
+Vetor (ou array) é uma lista de elementos do mesmo tipo que podem ser acessados individualmente com o mesmo nome de variável. Definimos um vetor dizendo o tipo, o nome da variável e o número de elementos: \verb|tipo nome[nº elementos];|.
+\begin{ex}\label{ex15.0}Alguns testes de inicialização de vetores.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main (void)
+{
+  int i;
+  double x[3]={1.5,2,3};
+  int y[]={1,2,5};
+  int z[8]={1,2,5};
+
+  for (i=0;i<3;i++)     printf("x[%d] = %f\n",i,x[i]);
+  printf("\n");
+  for (i=0;i<3;i++)     printf("y[%d] = %d\n",i,y[i]);
+  printf("\n");
+  for (i=0;i<8;i++)     printf("z[%d] = %d\n",i,z[i]);
+} 
+\end{verbatim}
+
+
+\begin{ex}\label{ex15}Implemente um programa que armazena em um vetor os 10 primeiros números da sequência de Fibonacci e imprime a soma do sétimo com o décimo.
+\end{ex}
+\begin{verbatim}
+ #include <stdio.h>
+
+main (void)
+{
+  int i,x[10];
+  x[0]=1;
+  x[1]=1;
+  for (i=0;i<8;i++)
+  {
+    x[i+2]=x[i+1]+x[i];
+  }
+  printf("soma do sétimo com o décimo = %d\n",x[6]+x[9]);
+}
+\end{verbatim}
+No exemplo \ref{ex15}, definimos um vetor com 10 posições fazendo \verb|int x[10];|. Depois, acessamos a posição \verb|i| do vetor fazendo \verb|x[i]|. Observe que as posições do vetor começamos em \verb|0| e, portanto, a sétima posição é acessada por \verb|x[6]| e a décima por \verb|x[9]|.
+
+\begin{ex}\label{ex_Jacobi}O método iterativo de Jacobi para calcular a solução do sistema linear
+\begin{eqnarray}
+\nonumber a_{11}x_1+a_{12}x_2+\cdots+a_{1n}x_n&=&y_1\\
+\nonumber a_{21}x_1+a_{22}x_2+\cdots+a_{2n}x_n&=&y_2\\
+\nonumber &\vdots&     \\
+\label{sistema} a_{n1}x_1+a_{n2}x_2+\cdots+a_{nn}x_n&=& y_n
+\end{eqnarray}
+é dado pela recursão
+\begin{eqnarray*}
+x_1^{(k+1)}&=&\frac{y_1 - \left(a_{12}x_2^{(k)}+\cdots+a_{1n}x_n^{(k)}\right)}{a_{11}}\\
+x_2^{(k+1)}&=&\frac{y_2 - \left(a_{21}x_1^{(k)}+a_{23}x_3^{(k)}+\cdots+a_{2n}x_n^{(k)}\right)}{a_{22}}\\
+&\vdots&\\
+x_n^{(k+1)}&=&\frac{y_2 - \left(a_{n1}x_1^{(k)}+\cdots+a_{n,n-2}x_{n-2}^{(k)}+a_{n,n-1}x_{n-1}^{(k)}\right)}{a_{nn}}
+\end{eqnarray*}
+onde $x_1^0$, $x_2^0$, $\cdots$, $x_n^0$ é um chute inicial. A iteração converge para a solução quando a matriz do sistema é estritamente diagonal dominante.
+
+Implemente um código para resolver o sistema
+\begin{eqnarray*}
+3x+y+z&=&1\\
+-x-4y+2z&=&2\\
+-2x+2y+5z&=&3
+\end{eqnarray*}
+com o método de Jacobi.
+\end{ex}
+Primeiro, montamos a iteração:
+\begin{eqnarray*}
+x^{k+1}&=&\frac{1-y^{k}-z^{k}}{3}\\
+y^{k+1}&=&\frac{-2-x^{k}+2z^{k}}{4}\\
+z^{k+1}&=&\frac{3+2x^{k}-2y^{k}}{5}
+\end{eqnarray*}
+Vamos usar o chute inicial $x^0=0$, $y^0=0$ e $z^0=0$.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main (void)
+{
+  double norma2,tolerancia=1e-3,x_antigo[3],x_atual[3];
+  int i,controle=3;
+  //chute inicial
+  for (i=0;i<3;i++)x_antigo[i]=0;
+
+  //iteração
+  while (controle)
+  {
+    x_atual[0]=(1-x_antigo[1]-x_antigo[2])/3;
+    x_atual[1]=(-2-x_antigo[0]+2*x_antigo[2])/4;
+    x_atual[2]=(3+2*x_antigo[0]-2*x_antigo[1])/5;
+    norma2=0;
+    for (i=0;i<3;i++) norma2+=(x_atual[i]-x_antigo[i])*(x_atual[i]-x_antigo[i]);
+    if (norma2<tolerancia) controle--;
+    else controle=3;
+    for (i=0;i<3;i++) x_antigo[i]=x_atual[i];
+    printf("x=%f, y=%f, z=%f\n",x_atual[0],x_atual[1],x_atual[2]);	
+  }
+}
+\end{verbatim}
+Nessa versão de código usamos o critério de parada norma em $l_2$ da diferença menor que uma tolerância, isto é,
+$$
+||(x^{k+1}-x^{k},y^{k+1}-y^{k},z^{k+1}-z^{k})||_2=\sqrt{(x^{k+1}-x^{k})^2+(y^{k+1}-y^{k})^2+(z^{k+1}-z^{k})^2}<TOL.
+$$
+Também usamos o dispositivo de controle, isto é, depois que atingimos a tolerança caminhamos mais três passos.
+
+Agora vamos fazer um vesão um pouco mais elaborada. Vamos criar uma função que calcula norma $l_2$ de vetores e outra que faz uma iteração. Para isso, temos que passar um vetor como parâmetro para a função. Observe o código:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+double norma_dif_2(double x[3],double y[3])
+{
+  int i;
+  double norma2=0;
+  for (i=0;i<3;i++) norma2+=(x[i]-y[i])*(x[i]-y[i]); 
+  return sqrt(norma2);	
+}
+void Iteracao(double x_antigo[3],double x_atual[3])
+{
+    x_atual[0]=(1-x_antigo[1]-x_antigo[2])/3.;
+    x_atual[1]=(-2-x_antigo[0]+2*x_antigo[2])/4.;
+    x_atual[2]=(3+2*x_antigo[0]-2*x_antigo[1])/5.;
+}
+void Jacobi(double tolerancia,double x_atual[3])
+{
+  double x_antigo[3];
+  int i,controle=3;
+  //chute inicial
+  for (i=0;i<3;i++)x_antigo[i]=0;
+
+  //iteração
+  while (controle)
+  {
+    Iteracao(x_antigo,x_atual);
+    if (norma_dif_2(x_antigo,x_atual)<tolerancia) controle--;
+    else controle=3;
+    for (i=0;i<3;i++) x_antigo[i]=x_atual[i];
+    //printf("x=%f, y=%f, z=%f\n",x_atual[0],x_atual[1],x_atual[2]);	
+  }
+  return;
+}
+
+main (void)
+{
+  int i;
+  double tolerancia=1e-3,solucao[3];
+  Jacobi(tolerancia,solucao);
+  for (i=0;i<3;i++)     printf("x[%d] = %f\n",i,solucao[i]);
+}
+\end{verbatim}
+Esse último código passa vetores como parâmetros para funções. A função \verb|norma_dif_2| passa dois vetores e retorna \verb|double|. A \verb|Iteracao| passa dois vetores e retorna \verb|void|, onde usamos um vetor para levar a informação para dentro da função e o outro vetor para retirar o resultado: \verb|x_antigo| leva a informação e \verb|x_atual| entra com qualquer coisa e é calculado dentro da função. Já a função \verb|Jacobi| entra o valor da tolerância e passa um vetor para colocar a solução.
+
+Os códigos que implementamos resolve apenas um único sistema $3$x$3$. É interessante pensar em rotinas mais gerais, que resolvem um sistema $Ax=b$ de dimensão $n$x$n$.
+
+
+\section{Matrizes}
+Matrizes são vetores de vetores, isto é, cada posição de um vetor pode ser um vetor. Para definir uma matriz fazemos \verb|tipo nome[nº linhas][nº colunas]|, como no exemplo:
+\begin{ex}\label{ex16}Alguns testes de inicialização de matrizes.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main (void)
+{
+  int i,j;
+  double x[2][2];// não inicializado
+  int y[3][3]={{1,2,5},{1,0,1},{0,1,0}};
+  x[0][0]=1.1;
+  x[0][1]=2;
+  x[1][0]=3;
+  x[1][1]=4;
+  for (i=0;i<2;i++) 
+  {  
+    for (j=0;j<2;j++) 
+    {
+    printf("x[%d][%d] = %f    ",i,j,x[i][j]);
+    }
+  printf("\n");
+  }
+  
+  printf("\ny[%d][%d] = %d\n",1,2,y[1][2]);
+}
+\end{verbatim}
+
+\begin{ex}\label{ex_Jacobi_1}Vamos refazer o exemplo \ref{ex_Jacobi} usando estrutura de matrizes
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main (void)
+{
+  double vetor[3]={1,2,3},matriz[3][3]={{3,1,1},{-1,-4,2},{-2,2,5}};
+  double norma2,tolerancia=1e-3,x_antigo[3],x_atual[3];
+  int i,controle=3;
+  //chute inicial
+  for (i=0;i<3;i++)x_antigo[i]=0;
+
+  //iteração
+  while (controle)
+  {
+    x_atual[0]=(vetor[0]-matriz[0][1]*x_antigo[1]-matriz[0][2]*x_antigo[2])/matriz[0][0];
+    x_atual[1]=(vetor[1]-matriz[1][0]*x_antigo[0]-matriz[1][2]*x_antigo[2])/matriz[1][1];
+    x_atual[2]=(vetor[2]-matriz[2][0]*x_antigo[0]-matriz[2][1]*x_antigo[1])/matriz[2][2];
+    norma2=0;
+    for (i=0;i<3;i++) norma2+=(x_atual[i]-x_antigo[i])*(x_atual[i]-x_antigo[i]);
+    if (norma2<tolerancia) controle--;
+    else controle=3;
+    for (i=0;i<3;i++) x_antigo[i]=x_atual[i];
+    printf("x=%f, y=%f, z=%f\n",x_atual[0],x_atual[1],x_atual[2]);	
+  }
+}
+\end{verbatim}
+Agora, vamos fazer o mesmo código outra vez generalizando as rotinas
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+#define N 3 /* dimensão do sistema*/
+
+double norma_2(double x[N])
+{
+  int i;
+  for (i=0;i<N;i++)
+  {
+    norma2+=x[i]*x[i];
+  }
+  return sqrt(norma2);	
+}
+void Iteracao(double x_antigo[N],double x_atual[N],double matriz[N][N], double vetor[N])
+{
+  double aux;
+  int i,j;
+  for (i=0;i<N;i++)
+  {
+    aux=0;
+    for (j=0;j<i;j++)
+    aux+=matriz[i][j]*x_antigo[j];
+    for (j=i+1;j<N;j++)
+    aux+=matriz[i][j]*x_antigo[j];
+  x_atual[i]=(vetor[i]-aux)/matriz[i][i];
+  }
+}
+void Jacobi(double tolerancia,double x_atual[N])
+{
+  double x_antigo[N],dif[N];
+  double matriz[N][N]={{3,1,1},{-1,-4,2},{-2,2,5}};
+  double vetor[N]={1,2,3};
+  int i,controle=3;
+  //chute inicial
+  for (i=0;i<N;i++)x_antigo[i]=0;
+
+  //iteração
+  while (controle)
+  {
+    Iteracao(x_antigo,x_atual,matriz,vetor);
+    for (i=0;i<N;i++) dif[i]=x_atual[i]-x_antigo[i];
+    if (norma_2(dif)<tolerancia) controle--;
+    else controle=3;
+    for (i=0;i<N;i++) x_antigo[i]=x_atual[i];
+  }
+  return;
+}
+
+main (void)
+{
+  int i;
+  double tolerancia=1e-3,solucao[N];
+  Jacobi(tolerancia,solucao);
+  for (i=0;i<N;i++)     printf("x[%d] = %f\n",i,solucao[i]);
+}
+\end{verbatim}
+No último código usamos uma diretiva \verb|#define N 3| que diz para o compilador trocar todos os $N$ do código por $3$. Observe que a constante $N$ é bastante usada no código e a diretiva \verb|# define| desobriga de passá-la como parâmetro em todas as funções que ela aparece.
+
+
+
+\section{Problemas}
+\begin{ex}\label{ex_Jacobi_2} Resolva numericamente o problema de valor de contorno
+  \begin{eqnarray*}
+    -u_{xx} &=& 100(x-1)^2,\quad 0 < x < 1,\label{eq:pvc2-eq}\\
+    u(0) &=& 0,\label{eq:pvc2-bc1}\\
+    u(1) &=& 0.\label{eq:pvc2-bc2}
+  \end{eqnarray*}
+usando a fórmula de diferenças finitas central de ordem 2 para discretizar a derivada. Compute o erro absoluto médio definido por
+\begin{equation*}
+  E := \frac{1}{N}\sum_{i=1}^N \left|u(x_i) - u_i\right|,
+\end{equation*}
+onde $x_i$ é o $i$-ésimo ponto da malha, $i=1, 2, \dotsc, N$ e $N$ é o número de pontos da mesma, $u_i$ é a solução aproximada e $u(x_i)$ é a solução analítica, dada por
+\begin{equation*}
+  u(x) = -\frac{25(x-1)^4}{3} - \frac{25x}{3} + \frac{25}{3}.
+\end{equation*}
+\end{ex}
+Solução: Primeiro, vamos montar a discretização do problema que está definido no domínio $[0,1]$. A malha é dada por:
+  \begin{equation*}
+    x_i = (i-1)h,\quad i=1, 2, \dotsc, N,
+  \end{equation*}
+com $h = 1/(N-1)$.
+
+Aplicando na equação diferencial o método de diferenças finitas central de ordem 2 para aproximar a derivada segunda, obtemos as seguintes $N-2$ equações:
+\begin{equation*}
+  - \frac{u_{i-1} - 2u_i + u_{i+1}}{h^2} = 100(x_i - 1)^2,\quad i = 2, \dotsc, N-1.
+\end{equation*}
+As equações de contorno levam as condições:
+\begin{equation*}
+  u_1 = u_N = 0.
+\end{equation*}
+Ou seja, obtemos o seguinte sistema linear $N\times N$:
+\begin{eqnarray}
+  u_1 &=& 0,\label{eq:pvc2_disc_bc1}\\
+  -\frac{1}{h^2}\left(u_{i-1} - 2u_i + u_{i+1}\right) &=& 100(x_i-1)^2,\quad i=2, \dotsc, N-1,\\
+  u_N &=& 0.\label{eq:pvc2_disc_bc2}
+\end{eqnarray}
+Observamos que este é um sistema linear $N\times N$, o qual pode ser escrito na forma matricial $A\underline{u} = b$, cujos matriz de coeficientes é
+\begin{equation*}
+  A = 
+  \begin{bmatrix}
+    1 & 0 & 0 & 0 & 0 & \cdots & 0\\
+    1 & -2 & 1 & 0 & 0 & \cdots & 0\\
+    0 & 1 & -2 & 1 & 0 & \cdots & 0\\
+    \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+    0 & 0 & 0 & 0 & 0 & \cdots & 1
+  \end{bmatrix},
+\end{equation*}
+o vetor das incógnitas e o vetor dos termos constantes são
+\begin{equation*}
+  \underline{u} =
+  \begin{bmatrix}
+    u_1\\
+    u_2\\
+    u_3\\
+    \vdots\\
+    u_N
+  \end{bmatrix}\quad\text{e}\quad
+  b =
+  \begin{bmatrix}
+    0\\
+    -100h^{2}(x_2-1)^2\\
+    -100h^{2}(x_3-1)^2\\
+    \vdots\\
+    0
+  \end{bmatrix}.
+\end{equation*}
+Vamos aplicar o método de Jacobi para resolver esse problema. Partimos do exemplo \ref{ex_Jacobi_1} e introduzimos a matriz oriunda da discretização:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+#define N 101 /* dimensão do sistema*/
+
+double norma_2(double x[N])
+{
+  int i;
+  double norma2=x[0]*x[0]/(2*(N-1));
+  for (i=1;i<N-1;i++)
+  {
+    norma2+=x[i]*x[i]/(N-1);
+  }
+  norma2+=x[N-1]*x[N-1]/(2*(N-1));
+  return sqrt(norma2);	
+}
+void Iteracao(double u_antigo[N],double u_atual[N],double matriz[N][N], double vetor[N])
+{
+  double aux;
+  int i,j;
+  for (i=0;i<N;i++)
+  {
+    aux=0;
+    for (j=0;j<i;j++)
+    aux+=matriz[i][j]*u_antigo[j];
+    for (j=i+1;j<N;j++)
+    aux+=matriz[i][j]*u_antigo[j];
+    u_atual[i]=(vetor[i]-aux)/matriz[i][i];
+  }
+}
+void Jacobi(double tolerancia,double u_atual[N],double vetor[N],double matriz[N][N],double malha[N])
+{
+
+  double u_antigo[N],dif[N];
+  int i,controle=3;
+
+  //chute inicial
+  for (i=0;i<N;i++)u_antigo[i]=0;
+
+  //iteração
+  while (controle)
+  {
+    Iteracao(u_antigo,u_atual,matriz,vetor);
+    for (i=0;i<N;i++) dif[i]=u_atual[i]-u_antigo[i];
+    if (norma_2(dif)<tolerancia) controle--;
+    else controle=3;
+    for (i=0;i<N;i++) u_antigo[i]=u_atual[i];
+  }
+  return;
+}
+
+double solucao_analitica(double x)
+{
+return -25.*(x-1.)*(x-1.)*(x-1.)*(x-1.)/3-25.*x/3+25./3.;
+}
+
+main (void)
+{
+  int i,j;
+  double tolerancia=1e-5,solucao[N];
+  double matriz[N][N];
+  double vetor[N],x[N];
+  //malha
+  double h=1./(N-1); 
+  for (i=0;i<N;i++) x[i]=i*h;
+  
+  
+  //matriz e vetor
+  for (i=0;i<N;i++) for (j=0;j<N;j++) matriz[i][j]=0;
+  matriz[0][0]=1;
+  vetor[0]=0;
+  for (i=1;i<N-1;i++) 
+  {
+    matriz[i][i]=-2;
+    matriz[i][i+1]=1;
+    matriz[i][i-1]=1;
+    vetor[i]=-100*h*h*(x[i]-1)*(x[i]-1);
+  }
+  matriz[N-1][N-1]=1;
+  vetor[N-1]=0;
+
+  Jacobi(tolerancia,solucao,vetor,matriz,x);
+  //erro médio
+  double erro=0;
+  for (i=0;i<N;i++) erro+=fabs(solucao[i]-solucao_analitica(x[i]));
+  erro/=N;
+  printf("erro médio = %f\n",erro);
+  //for (i=0;i<N;i++)     printf("u_%d=%f, u(x[%d]) = %f\n",i,solucao[i],i,
+  solucao_analitica(x[i]));
+}
+\end{verbatim}
+
+
+\section{Exercícios}
+\begin{exer}\label{GS_exerc}
+Implemente um código para resolver o sistema
+\begin{eqnarray*}
+5x_1+x_2+x_3-x_4&=&1\\
+-x_1-4x_2+2x_4&=&-2\\
+-2x_1+2x_2-5x_3-x_4&=&-5\\
+x_2-x_3+5x_4&=&-5\\
+\end{eqnarray*}
+com o método de Jacobi.
+\end{exer}
+
+\begin{exer}
+Implemente um código para resolver o sistema
+\begin{eqnarray*}
+5x_1+x_2+x_3-x_4&=&1\\
+-x_1-4x_2+2x_4&=&-2\\
+-2x_1+2x_2-5x_3-x_4&=&-5\\
+x_2-x_3+5x_4&=&-5\\
+\end{eqnarray*}
+com o método de Gauss-Seidel.
+
+A iteração de Gauss-Seidel para resolver o sistema \ref{sistema} é
+\begin{eqnarray*}
+x_1^{(k+1)}&=&\frac{y_1 - \left(a_{12}x_2^{(k)}+\cdots+a_{1n}x_n^{(k)}\right)}{a_{11}}\\
+x_2^{(k+1)}&=&\frac{y_2 - \left(a_{21}x_1^{(k+1)}+a_{23}x_3^{(k)}+\cdots+a_{2n}x_n^{(k)}\right)}{a_{22}}\\
+&\vdots&\\
+x_n^{(k+1)}&=&\frac{y_2 - \left(a_{n1}x_1^{(k+1)}+\cdots+a_{n(n-1)}x_{n-1}^{(k+1)}\right)}{a_{nn}}
+\end{eqnarray*}
+onde $x_1^0$, $x_2^0$, $\cdots$, $x_n^0$ é um chute inicial.
+\end{exer}
+
+
+\begin{exer}\label{TDMA0}Um sistema tridiagonal é um sistema de equações lineares cuja matriz associada é tridiagonal, conforme a seguir:
+\begin{eqnarray*}\label{linsis:EqTriDiag} \begin{bmatrix}
+   {b_1} & {c_1} & {   } & {   } & {   } \\
+   {a_2} & {b_2} & {c_2} & {   } & {   } \\
+   {   } & {a_3} & {b_3} & \ddots & {   } \\
+   {   } & {   } & \ddots & \ddots & {c_{n-1}}\\
+   {   } & {   } & {   } & {a_n} & {b_n}\\
+\end{bmatrix}
+\begin{bmatrix}
+   {x_1 }  \\
+   {x_2 }  \\
+   {x_3 }  \\
+   \vdots   \\
+   {x_n }  \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+   {d_1 }  \\
+   {d_2 }  \\
+   {d_3 }  \\
+   \vdots   \\
+   {d_n }  \\
+\end{bmatrix}
+.
+\end{eqnarray*}
+
+
+A solução do sistema tridiagonal acima pode ser obtido pelo algoritmo de Thomas dado por:
+\begin{eqnarray*}\label{linsis:TriDiag_1}
+ c'_i &=&
+\begin{cases}
+\begin{array}{lcl}
+  \frac{c_i}{b_i}                   , & i = 1 \\
+  \frac{c_i}{b_i - a_i c'_{i - 1}}  , & i = 2, 3, \dots, n-1
+\end{array}
+\end{cases}\\
+\text{e}\nonumber\\
+d'_i &=&
+\begin{cases}
+\begin{array}{lcl}
+  \frac{d_i}{b_i}                   , & i = 1 \\
+  \frac{d_i - a_i d'_{i - 1}}{b_i - a_i c'_{i - 1}}  , & i = 2, 3, \dots, n.
+\end{array}
+\end{cases}
+\end{eqnarray*}
+Finalmente a solução final é obtida por substituição reversa:
+\begin{eqnarray*}\label{linsis:TriDiag_2}
+x_n &=& d'_n\\
+ x_i &=& d'_i - c'_i x_{i + 1}, \qquad   i = n - 1, n - 2, \ldots, 1.
+\end{eqnarray*}
+
+Implemente um código para resolver sistemas tridiagonais e teste resolvendo o problema
+$$ \begin{bmatrix}
+   { 2 } & { 1 } & { 0 } & { 0 } & { 0 } \\
+   { 1 } & { 2 } & { 1 } & { 0 } & { 0 } \\
+   { 0 } & { 1 } & { 2 } & { 1 } & { 0 } \\
+   { 0 } & { 0 } & { 1 } & { 2 } & { 1 } \\
+   { 0 } & { 0 } & { 0 } & { 1 } & { 2 }
+ \end{bmatrix}
+\begin{bmatrix}
+   {x_1 }  \\
+   {x_2 }  \\
+   {x_3 }  \\
+   {x_4 }  \\
+   {x_5 }
+\end{bmatrix}
+=
+\begin{bmatrix}
+   {4}  \\
+   {4 }  \\
+   {0}  \\
+   {0}\\
+   {2 }
+\end{bmatrix}
+.
+$$
+\end{exer}
+
+
+\begin{exer}Refaça o exercício \ref{GS_exerc} usando a estrutura de matrizes.
+ 
+\end{exer}
+
+\begin{exer}Escreva um programa que lê as entradas de uma matriz diagonal estritamente dominante $A$ e um vetor $B$ e imprime a solução do sistema $Ax=B$. Use o método iterativo de Gauss-Seidel.
+\end{exer}
+
+
+\begin{exer}\label{exerc_8.1}Resolva numericamente o problema de valor de contorno para a equação de calor no estado estacionário
+$$\left\{\begin{array}{l}-u_{xx}=32,~~ 0<x<1.\\
+u(0)=5\\
+u(1)=10\end{array}
+\right.
+$$
+usando o método de diferenças finitas.
+\end{exer}
+
+\begin{exer}\label{exerc_8.2}Resolva numericamente o problema de valor de contorno para a equação de calor no estado estacionário
+$$\left\{\begin{array}{l}-u_{xx}=200e^{-(x-1)^2},~~ 0<x<2.\\
+u(0)=120\\
+u(2)=100\end{array}
+\right.
+$$
+usando o método de diferenças finitas.
+\end{exer}
+
+\begin{exer}\label{exerc_8.3}Resolva numericamente o problema de valor de contorno para a equação de calor no estado estacionário
+$$\left\{\begin{array}{l}-u_{xx}=200e^{-(x-1)^2},~~ 0<x<2.\\
+u'(0)=0\\
+u(2)=100\end{array}
+\right.
+$$
+usando o método de diferenças finitas.
+\end{exer}

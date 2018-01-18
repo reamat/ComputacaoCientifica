@@ -1,0 +1,375 @@
+
+
+\chapter{Introdução à programação Científica em linguagem C}
+\section{Linguagem C}
+Linguagem de programação é um conjunto de regras sintáticas e semânticas usadas para construir um programa de computador. Um programa é uma sequência de instruções que podem ser interpretada por um computador ou convertida em linguagem de máquina.
+As linguagens de programação são classificadas quanto ao nível de abstração:
+\begin{itemize}
+\item Linguagens de programação de baixo nível são aquelas cujos símbolos são uma representação direta do código de máquina. Exemplo: Assembly.
+
+\item Linguagem de programação de médio nível são aquelas que possuem símbolos que são um representação direta do código de máquina, mas também símbolos complexos que são convertidos por um compilador. Exemplo: C, C++
+
+\item Linguagem de programação de alto nível são aquelas composta de símbolos mais complexos, inteligível pelo ser humano e não-executável diretamente pela máquina. Exemplo: Pascal, Fortran, Java.
+\end{itemize}
+
+Este livro de programação e computação científica está desenvolvido em linguagem de programação C. Essa é uma linguagem de programação compilada, isto é, precisa um compilador que converte o programa para um código em linguagem de máquina. O sistema operacional Linux já possui o compiador GCC instalado por padrão, mas os usuários do sistema operacional Windows deverão baixar e instalar. No caso do Linux, o código poderá ser escrito em qualquer programa que edite texto, tais como Gedit ou Kile.
+
+\section{Hello, world!}
+Uma maneira eficaz para aprender uma linguagem de programação é fazendo programas nela. Portanto, vamos ao nosso primeiro programa.
+\begin{ex}\label{ex1} Faça um programa que escreva as palavras Hello, world!
+\end{ex}
+Abra o programa Gedit e numa janela limpa escreva o seguinte código:
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+printf("hello, world!\n");
+}
+\end{verbatim}
+Salve-o com o nome hello\_world.c. Para compilar o programa, abra um terminal, vá até a pasta onde está salvo o arquivo e digite a seguinte linha de comando:
+\begin{verbatim}
+gcc hello_world.c
+\end{verbatim}
+Finalmente, para executar o programa, digite a seguinte linha de comando:
+\begin{verbatim}
+./a.out
+\end{verbatim}
+Comentários sobre o programa do exemplo \ref{ex1}:
+\begin{itemize}
+ \item O comando \verb|#include <stdio.h>| que aparece no início do código inclui o arquivo \verb|stdio.h| ao código. Esse arquivo é um pedaço de código chamado de biblioteca padrão de entrada e saída (standard input/output library) permite o uso do comando \verb|printf|. Usamos bibliotecas quando precisamos usar funções que não são nativas da linguagem C.
+ \item O \verb|main()| indica onde começa a execução do programa. A chave \verb|{| indica o início do \verb|main()| e a chave \verb|}| indica o fim. 
+ \item A instrução \verb|printf("hello, world!\n");| imprime o texto {\it hello, world!} na tela. Toda instrução deve ser concluída com ponto e vírgula \verb|;|. O texto a ser impresso deve estar entre aspas \verb|" "|. O comando \verb|\n| imprime linha nova, isto é, a texto a seguir será impresso na próxima linha.
+ \item Quando o código estiver com erros de sintaxe, a compilação feita pela linha de comando 
+\begin{verbatim}
+gcc hello_world.c
+\end{verbatim}
+imprime os erros indicando a linha onde ele está. Por exemplo, tente compilar o programa
+ \begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  printf("hello, world!\n")
+}
+\end{verbatim}
+O compilador retorna o seguinte erro:
+\begin{verbatim}
+gcc hello_world.c 
+hello_world.c: In function 'main':
+hello_world.c:5:1: error: expected ';' before '}' token
+ }
+\end{verbatim}
+
+\item O nome \verb|a.out| para o executável é o padrão. Podemos nomear o executável compilando com a linha 
+\begin{verbatim}
+gcc hello_world.c -o exec.out 
+\end{verbatim}
+Nesse caso, execute com a linha 
+\begin{verbatim}
+ ./exec.out
+\end{verbatim} 
+\end{itemize}
+
+\section{Inserção de comentários}
+Os códigos necessitam de explicações, lembretes e comentários que ajudam na sua leitura. No entanto, esses textos devem ser ignorado pelo compilador, pois interessam apenas aos programadores. Para isso, usaremos o comando \verb|\\| para comentar a parte final de uma linha e \verb|/*    */| para comentar um trecho inteiro. Observe o exemplo:
+ \begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  printf("h\n");
+  /*printf("e\n");
+  printf("l\n");
+  printf("l\n");*/
+  printf("o\n");
+  printf("world\n"); // O hello ficou na vertical e o world na horizontal
+}
+\end{verbatim}
+
+\section{Variáveis}
+Um variável é o nome que damos a uma posição da memória. Os tipos de variáveis mais comuns são:
+\begin{itemize}
+ \item \verb|double| : um número racional armazenado em um sistema de ponte flutuante com 64 bits, sendo 53 bits para a mantissa, 11 para o expoente e 1 para o sinal. O menor número positivo tipo \verb|double| é da ordem de $10^{-308}$ e o maior da ordem de $10^{308}$.
+ \item \verb|float| : um número racional armazenado em um sistema de ponte flutuante com 32 bits, sendo 24 bits para a mantissa, 7 para o expoente e 1 para o sinal. 
+ \item \verb|int| : um número inteiro armazenado com 16 bits. O tipo \verb|int| abrange número entre $-32768$ e $32767$.
+\item \verb|long int| : um número inteiro armazenado com 32 bits. O tipo \verb|long int| abrange número entre $-2147483648$ e $2147483647$.
+\item \verb|unsigned int|: um inteiro positivo entre $0$ e $65535$.
+\item Existem outras variações tais como \verb|short int|, \verb|unsigned long int|, \verb|short int| e \verb|unsigned short int|.
+ \item \verb|char| : uma variável que armazena um único caractere (1 byte de 8 bits).
+\end{itemize}
+
+As variáveis precisam ser declaradas antes de ser usadas e devem receber um nome diferentes das palavras-chave da linguamgem C. O símbolo \verb|=| é usado para atribuir valores a uma variável.
+\begin{ex}\label{ex2}Escreva um programa que imprime a número $\pi\approx 3.14159 26535 89793 23846 26433 83279 50288 41971$.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  //Declaração de variáveis
+  double pi1; 
+  float pi2; 
+
+  //atribuição de valores 
+  pi1=3.1415926535897932384626433832795028841971; 
+  pi2=3.1415926535897932384626433832795028841971; 
+
+
+  printf("pi1=%.20f\n",pi1); 
+  printf("pi2=%.20f\n",pi2); 
+}
+\end{verbatim}
+Comentários sobre o programa do exemplo \ref{ex2}:
+\begin{itemize}
+ \item Observe que a variável \verb|pi1| confere com o número $\pi$ em até 16 dígitos significativos, enquanto \verb|pi2| confere no máximo 8 dígitos. Isso é devido a precisão do sistema de ponto flutuante tipos \verb|double| e \verb|float|.
+ \item A parte do texto no comando \verb|printf| continua entre aspas, mas a variável está sem aspas e depois da vírgula. Para imprimir o valor de uma variável é necessário informar o tipo de variável: \verb|%f| e \verb|%e| para variáveis \verb|double| ou \verb|float|, \verb|%d| para variáveis do tipo \verb|int| e \verb|%c| para \verb|char|. Para indicar o número de casas decimais de uma variável \verb|float| ou \verb|double| usamos \verb|%.12f| (doze casas).
+ \item Usamos aspas simples para atribuir valor para variavél tipo \verb|char|. Por exemplo \verb|var='A'|.
+ \item Podemos atribuir um valor para a variável ao mesmo tempo que declaramos. Por exemplo \verb|char var='A'|.
+ \end{itemize}
+
+ 
+\section{Scanf}
+ Assim como podemos imprimir uma variável, também podemos ler. Usamos o comando \verb|scanf| para essa utilidade.
+\begin{ex}
+ Escreva um programa que lê um número entre 0 e 9 e depois imprima-o.
+\end{ex}
+ \begin{verbatim}
+  #include <stdio.h>
+
+main()
+{
+  int x;
+  printf("digite um número inteiro entre 0 e 9\n");
+  scanf("%d",&x);
+
+  printf("x=%d\n",x); 
+}
+ \end{verbatim}
+Observe para usar o comando \verb|scanf("%d",&x);| precisamos, além de dizer o tipo inteiro \verb|%d|, também passar a referência na memória onde está armazenado o valor do inteiro usando \verb|&x| em vez de colocar simplesmente o valor \verb|x|. Faremos uma discussão mais apurada sobre o símbolo \verb|&| durante o curso. O comando \verb|getchar();| é uma alternativa na leitura de um caractere.
+
+\section{A biblioteca math.h}
+A biblioteca \verb|math.h| permite usar funções matemáticas básicas, tais como senos, cossenos, exponenciais, logarítmos, etc. Para usá-la, é necessário adicionar a linha \verb|#include <math.h>| no cabeçalho e compilar o programa com a linha \verb|gcc programa.c -lm|.
+\begin{ex}Implemente um programa para testar as funções seno, cosseno, tangente, etc.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+ 
+main (void)
+{
+  double x = 8.62;
+  
+  printf("Biblioteca math.h \n\n");
+
+  printf("Valor aproximado para baixo de %f é %f\n",x, floor(x) );
+  printf("Valor aproximado para cima de %f é %f\n", x, ceil(x));
+
+  printf("Raiz quadrada de %f é %f\n",x,sqrt(x));
+  printf("%.2lf ao quadrado é %.2f \n",x,pow(x,2));
+
+  printf("Valor de  seno de %.2f = %.2f \n",x,sin(x));
+  printf("Valor de  cosseno de %.2f = %.2f \n",x,cos(x));
+  printf("Valor de  tangente de %.2f = %.2f \n",x,tan(x));
+
+  printf("Logaritmo natural de %.2f = %.2f \n",x,log(x));
+  printf("Logaritmo de %.2f  na base 10 = %.2f \n",x,log10(x));
+  printf("Exponencial de %.2f = %e \n",x,exp(x));
+
+  printf("O valor aproximado de pi é %e \n",M_PI);
+  printf("O valor aproximado de pi/2 é %e \n",M_PI_2);
+
+  printf("O módulo de -3.2 é %f \n",fabs(-3.2));
+  printf("O módulo de -3 é %d \n",abs(-3));
+}
+\end{verbatim}
+
+
+\section{Operações entre inteiros e reais}
+Como esperado, usamos os símbolos \verb|+|, \verb|-|, \verb|/| e \verb|*| para somar, subtrair, dividir e multiplicar, respectivamente. No caso de operação entre dois inteiros, ainda existe mais um símbolo, o \verb|%|, que serve para pegar o resto da divisão inteira (aritmética modular). A operação entre dois números inteiros, resulta em um número inteiro e a operação entre dois números reais, resulta em um número real. No entanto, a operação entre um real e um inteiro, resulta em um real.
+\begin{ex}\label{ex3}Escreva um programa que lê dois números inteiros, tome o resto da divisão do primeiro pelo segundo e imprima o resultado.
+\end{ex}
+\begin{verbatim}
+ #include <stdio.h>
+
+main()
+{
+  int a,b, resultado;
+  printf("digite um número inteiro\n");
+  scanf("%d",&a);
+  printf("digite outro número inteiro\n");
+  scanf("%d",&b);
+  resultado=a%b;
+  printf("O resto da divisão do primeiro número pelo segundo é=%d\n",resultado); 
+}
+\end{verbatim}
+\begin{ex}\label{ex4}Escreva um programa que lê dois flot's e imprime o resultado da soma de $1$ e $10^{-8}$.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  float a,b, resultado;
+  a=1;
+  b=1e-8;
+  resultado=a+b;
+  printf("a=%f, b=%f, resultado=%f\n",a,b,resultado); 
+}
+\end{verbatim}
+Observe no exemplo \ref{ex4} a soma de $1+10^{-8}$ resultou em $1$. Isso se deve a precisão de oito dígitos de um \verb|float|.
+
+A linguagem de programação C é chamada de linguagem imperativa, pois ela é executada em sequência de ações. Para entender isso, vamos estudar o seguinte programa:
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  double x,y,z;
+  x=2;
+  y=2;
+  z=x+y;
+  x=1;
+  y=1;
+  printf("x=%f, y=%f, z=%f\n",x,y,z); 
+}
+\end{verbatim}
+Os valores impressos são $x=1$,$y=1$ e $z=4$. Mas uma das linhas faz $z=x+y$, então, por que o valores impressos não são $x=1$,$y=1$ e $z=2$ ou $x=2$,$y=2$ e $z=4$? Para entender, interprete o programa instrução por instrução, sequencialmente. Primeiro, defininos três variáveis tipo \verb|double|, $x$, $y$ e $z$. Depois atribuímos o valor $2$ para $x$, $2$ para $y$ e atribuímos o valor $x+y$ para $z$. Nesse ponto do programa, $z=4$. Seguindo, atribuímos o valor $1$ para $x$, substituindo o antigo valor. Da mesma forma, atribuímos o valor $1$ para $y$. Nesse ponto do programa, $x=1$, $y=1$ e $z=4$, pois não atribuímos novo valor para $z$.
+
+\section{Operadores relacionais}
+São operadores que comparam dois números, tendo como resposta duas possibilidades: VERDADE (1) ou FALSO (0). Para testar se dois números são iguais, usamos o símbolo \verb|==|. Observe o programa abaixo:
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  double x,y,z;
+  x=y=2;
+  z=1;
+  printf("O resultado de %f == %f é : %d\n",x,y,x==y);
+  printf("O resultado de %f == %f é : %d\n",x,z,x==z);
+}
+\end{verbatim}
+Aqui, testamos se 2 é igual a 2 e obtemos como resposta 1, isto é, VERDADE. Também testamos se 2 é igual a 1 e a reposta foi 0, isto é, FALSO. Os operadores lógicos são:
+
+\begin{tabular}{|c|c|c|}
+\hline
+ Operador& Nome & Significado\\\hline
+\verb|a==b|&Igual&$a$ é igual a $b$?\\\hline
+\verb|a>b|&maior&$a$ é maior que $b$?\\\hline
+\verb|a>=b|&maior ou igual&$a$ é maior ou igual a $b$?\\\hline
+\verb|a<b|&menor&$a$ é menor que $b$?\\\hline
+\verb|a<=b|&menor ou igual&$a$ é menor ou igual a $b$?\\\hline
+\verb|a!=b|&diferente&$a$ é diferente a $b$?\\\hline
+\end{tabular}
+
+
+
+\section{Exercícios}
+\begin{exer} Escreva versões similares ao código do exemplo \ref{ex1} usando a instrução \verb|printf| várias vezes e introduzindo comentários. Use os comandos
+\begin{verbatim}
+ \7    \a    \b    \n    \r    \t    \v    \\    \'    \"    \?     %%
+\end{verbatim}
+e descubra a função de cada um deles. Produza propositalmente alguns erros de sintaxe e observe a resposta do compilador. Por exemplo, execute o código
+\begin{verbatim}
+#include <stdio.h>
+
+main(){
+  printf("\t matemática \v e \n \t computação\n \t científica\n");
+  printf("\n\n\n");
+  printf("\v \"linguagem\" \v programação \n programa\n");
+}
+\end{verbatim}
+
+\end{exer} 
+\begin{exer}
+Escreva versões similares ao código do exemplo \ref{ex2}, definindo variáveis de vários tipos e imprimindo-as. Use os formatos de leitura e escrita 
+\begin{verbatim}
+%d    %i    %o    %x                                                                                                                                                                                                                                                                                     \end{verbatim}
+para inteiros e 
+\begin{verbatim}
+%f    %e 
+\end{verbatim}
+para reais.
+\end{exer}
+\begin{exer}
+Escreva um programa que lê três caracteres um inteiro e dois double's e depois imprime todos eles. 
+\end{exer}
+
+\begin{exer}
+ Escreva um programa que some dois double's, $10^{8}+10^{-8}$. Discuta o resultado.
+\end{exer}
+\begin{exer}Abaixo temos três programas que divide $1$ por $2$. Execute-os e discuta os resultados.
+\end{exer}
+
+Programa 1
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  double a,b, resultado;
+  a=1;
+  b=2;
+  resultado=a/b;
+  printf("a=%f, b=%f, resultado=%f\n",a,b,resultado); 
+}
+\end{verbatim}
+
+Programa 2
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  double resultado=1/2;
+  printf("%f\n",resultado); 
+}
+\end{verbatim}
+
+Programa 3
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  double resultado=1.0/2.0;
+  printf("%f\n",resultado); 
+}
+\end{verbatim}
+
+\begin{exer}
+ Escreva um programa que calcula a área e o perímetro de um círculo de raio $r$.
+\end{exer}
+\begin{exer}Escreva um programa que lê dois números inteiros $a$ e $b$ e imprime o resultado do teste $a>b$. 
+\end{exer}
+
+\begin{exer}
+Estude o comportamento assintótico de cada uma das expressões abaixo:
+ \begin{itemize}
+  \item[a)] $\frac{(1+x)-1}{x}$, $x=10^{-12}$, $x=10^{-13}$, $x=10^{-14}$, $x=10^{-15}$, $x=10^{-16}$, ...
+  \item[b)] $\left(1+\frac{1}{x}\right)^x$, $x=10^{12}$, $x=10^{13}$, $x=10^{14}$, $x=10^{15}$, $x=10^{16}$, $x=10^{17}$,...
+ \end{itemize}
+Para cada um dos itens acima, escreva um programa para estudar o comportamento numérico. Use variável \verb|double| no primeiro programa, depois use \verb|float| para comparações. Explique o motivo da discrepância entre os resultados esperado e o numérico. Para entender melhor esse fenômeno, leia o capítulo 2 do livro \url{https://www.ufrgs.br/numerico/}, especialmente a seção sobre cancelamento catastrófico.
+\end{exer}
+\begin{exer}
+Considere as expressões:
+  \begin{equation*}
+    \frac{\exp(1/\mu)}{1+\exp(1/\mu)}  
+  \end{equation*}
+e
+\begin{equation*}
+  \frac{1}{\exp(-1/\mu)+1}
+\end{equation*}
+com $\mu>0$. Verifique que elas são idênticas como funções reais. Teste no computador cada uma delas para $\mu=0,1$, $\mu=0,01$ e $\mu=0,001$. Qual dessas expressões é mais adequada quando $\mu$ é um número pequeno? Por quê?
+\end{exer}
+
+\begin{exer} Use uma identidade trigonométrica adequada para mostrar que:
+  \begin{equation*}
+    \frac{1-\cos(x)}{x^2}= \frac{1}{2} \left(\frac{\sin(x/2)}{x/2}\right)^2.
+  \end{equation*}
+Analise o desempenho destas duas expressões no computador quando $x$ vale $10^{-5}$, $10^{-6}$, $10^{-7}$, $10^{-8}$, $10^{-9}$, $10^{-200}$ e $0$. Discuta o resultado.
+\emph{Dica:} Para $|x|<10^{-5}$, $f(x)$ pode ser aproximada por $1/2-x^2/24$ com erro de truncamento inferior a $10^{-22}$.
+\end{exer}
+
+

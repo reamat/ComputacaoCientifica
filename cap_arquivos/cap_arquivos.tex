@@ -1,0 +1,736 @@
+
+
+\chapter{Arquivos}
+\section{Escrevendo em arquivo o conteúdo da tela}
+A forma mais simples de colocar o conteúdo da tela em arquivo é usar o comando \verb|>>| na linha de comando.
+\begin{ex}
+Escreva um programa que escreva Avila na tela e execute salvando o conteúdo em arquivo.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  char nome[6]="Avila";
+  printf("%s\n",nome);
+}
+\end{verbatim}
+Execute com a linha
+\begin{verbatim}
+./a.out >> arquivo.txt
+\end{verbatim}
+Agora, abra o arquivo \verb|arquivo.txt| e olhe o conteúdo.
+
+\section{Abertura e Fechamento de arquivos}
+Até agora, os programas terminavam de ser executados e os resultados não eram salvos definitivamente em arquivo. Os arquivos são interessantes para fornecer dados de entrada para o programa e gravar resultados parciais e finais.
+
+As operações mais comuns em arquivos são: abertura, leitura, escrita e fechamento. Abertura consiste em associar uma variável lógica ao nome do arquivo, leitura consiste em colocar em memória o conteúdo do arquivo, escrita é o caminho inverso da leitura e fechamento é a liberação da variável que associa o arquivo.
+
+Em \verb|C| não existe um tipo de variável nativa para arquivos. O tipo de variável usada é \verb|FILE| da biblioteca \verb|<stdio.h>|. Na prática, declaramos um ponteiro para o tipo de variável \verb|FILE| tal como fazemos com outras variáveis:
+\begin{verbatim}
+int x;
+double *y;
+char ch;
+FILE *fp;
+\end{verbatim}
+
+O comando para a abertura de um arquivo é o \verb|fopen|, que entra com a string contendo o nome do arquivo, outra string contendo os modos de abertura e retorna um ponteiro para \verb|FILE|:
+\begin{verbatim}
+FILE *fp;
+
+fp=fopen(string com nome, string com modo de abertura);
+\end{verbatim}
+Os modos de abertura são os seguintes:
+\begin{itemize}
+ \item "r" (read): abertura de arquivo para leitura;
+ \item "w" (write): abertura de arquivo para escrita;
+ \item "a" (append): abertura de arquivo para acrescentar;
+\end{itemize}
+Além desses três modos, podemos usar um modo combinado:
+\begin{itemize}
+ \item "r+" (read): abertura de arquivo para leitura e escrita. Se o arquivo não existir, ele não é criado e, se ele já existir, os dados sobrescreverão os antigos;
+ \item "w+" (write): abertura de arquivo para leitura e escrita. Se o arquivo não existir, ele é criado e, se ele já existir, será apagado e recriado;
+ \item "a+" (append): abertura de arquivo para leitura e escrita. Se o arquivo não existir, ele é criado e, se ele já existir, os dados serão armazenados a partir do fim do arquivo.
+\end{itemize}
+
+
+Além disso, os arquivos podem ser abertos como binário ou texto. Os arquivos texto são aqueles que possuem símbolos interpretados por nós. Os arquivos binários em códigos não necessariamente legíveis e estão preparados para ser interpretados por um computador. Na prática, se você está interessado em salvar dados de simulação, vai preferir arquivo binário. Usamos a letra \verb|t| para configurar o arquivo como texto e a letra \verb|b| para binário. Assim, \verb|rb| é o modo de abertura para arquivo binário que permite leitura. Analogamente, \verb|wb|, \verb|ab|, \verb|r+b|, \verb|w+b| e \verb|a+b|.
+
+Depois que você não precisa mais do arquivo aberto, você deverá fechá-lo. Para isso, você usará a função \verb|fclose(arquivo)|, que entrará um ponteiro para o arquivo e retornará um inteiro. A função \verb|fcloseall(arquivo)| fecha todos arquivos abertos.
+
+\begin{ex}
+Implemente um código para abrir um arquivo binário no modo \verb|rb|.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  char nome[9]="nome.dat";
+  FILE *arq;
+ 
+  arq=fopen(nome,"r");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    fclose(arq);
+    }
+}
+\end{verbatim}
+Observe que, se você não possui um arquivo com o nome \verb|nome.dat| na mesma pasta onde está seu código em C, esse programa retorna \verb|Não conseguiu abrir o arquivo|.
+
+\begin{ex}
+Implemente um código para abrir um arquivo binário no modo \verb|w+b|. Adicione o nome do arquivo em linha de comando.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(int argc,char **argv)
+{
+  char *nome;
+  nome=argv[1];
+  FILE *arq;
+ 
+  arq=fopen(nome,"w+b");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    fclose(arq);
+    }
+}
+\end{verbatim}
+\section{Leitura e escrita de arquivos texto}
+Vamos começar com o comando \verb|fputc|, que entra um caractere e um ponteiro para arquivo e retorna um inteiro. Esse comando escreve o caractere no arquivo.
+\begin{ex}
+Escreva o sobrenome Avila em um arquivo de texto.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq;
+ 
+  arq=fopen("nome.txt","wt");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    fputc('A',arq);
+    fputc('v',arq);
+    fputc('i',arq);
+    fputc('l',arq);
+    fputc('a',arq);
+
+    fclose(arq);
+    }
+}
+\end{verbatim}
+Vá até a pasta onde está nome.txt a abre a arquivo com o gedit. Para ler um caractere de um arquivo, usamos comando \verb|fgetc| que entra um ponteiro para arquivo e retorna um inteiro relacionado ao caractere pelo tabela ASCII. O retorno EOF (End-of-File), indica que não havia caractere no arquivo para ser lido. A constante EOF vale $-1$.
+\begin{ex}
+Escreva um programa para ler o arquivo gerado pela rotina anterior e imprime o resultado na tela.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq;
+  int ch;
+ 
+  arq=fopen("nome.txt","rt");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    while ((ch=fgetc(arq))!=EOF)
+      {
+      printf("Caractere na tabela ASCII=%d\n",ch);
+      putchar(ch);
+      printf("\n");
+      }
+    fclose(arq);
+    }
+}
+\end{verbatim}
+
+\section{Leitura e escrita de arquivos binários}
+No modo binário, não existe noção de linha no arquivo, mas os arquivos são lidos e escritos em blocos. Nesse modo é possível ler e escrever um vetor inteiro de uma só vez. Essas operações para acessar um arquivo binário são chamadas de acesso direto.
+
+Para ler e escrever um arquivo binário, usamos as funções \verb|fread| e \verb|fwrite|, respectivamente. Eles têm a seguinte sintaxe:
+\begin{verbatim}
+int fwrite(const void *ptr, int size, int n, FILE *arq)
+int fread(const void *ptr, int size, int n, FILE *arq)
+\end{verbatim}
+onde
+\begin{itemize}
+ \item \verb|ptr| é um ponteiro de qualquer tipo apontando para o lugar da memória onde será lido ou escrito.
+ \item \verb|size| é o tamanho em bytes de cada um dos elementos que queremos ler ou escrever.
+ \item \verb|n| é a quantidade de elementos.
+ \item \verb|arq| é o ponteiro para o arquivo que estamos lendo ou escrevendo.
+\end{itemize}
+Essas duas funções retorno um inteiro contendo o número de elementos escritos/lidos com sucesso.
+\begin{ex}
+Implemente um código para escrever e ler o nome Artur.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq;
+  char str[6]="Artur";
+  char vamos_ler_aqui[6];
+
+
+//escrevendo 
+  arq=fopen("nome.dat","w+b");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    fwrite(str,sizeof(char),5,arq);
+    fclose(arq);
+    }
+
+//lendo
+  arq=fopen("nome.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    fread(vamos_ler_aqui,sizeof(char),5,arq);
+    fclose(arq);
+    }
+  printf("Nome=%s\n",vamos_ler_aqui);
+}
+\end{verbatim}
+
+
+\begin{ex}
+Implemente um código que escreve os dez primeiros números da sequência de Fibonacci em arquivo.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq; 
+  int v[10]={0,1};
+  int i;
+  for (i=0;i<8;i++) v[i+2]=v[i+1]+v[i];
+  arq=fopen("saida.dat","w+b");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    fwrite(v,sizeof(int),10,arq);
+    printf("Gravou! Vamos fechar o arquivo\n");
+    fclose(arq);
+    }
+}
+\end{verbatim}
+\begin{ex}\label{ex:arq2}
+Implemente um código que lê o arquivo do exemplo anterior.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq; 
+  int v[10];
+  int i;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    fread(v,sizeof(int),10,arq);
+    printf("Leu! Vamos fechar o arquivo\n");
+    fclose(arq);
+    }
+  for (i=0;i<10;i++) printf("v[%i]=%d\n",i,v[i]);
+}
+\end{verbatim}
+Em vez de ler/escrever bloco, você pode ler/escrever um de cada vez. Observe uma versão do código \ref{ex:arq2}.
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq; 
+  int v[10];
+  int i;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    for (i=0;i<10;i++) fread(v+i,sizeof(int),1,arq);
+    printf("Leu! Vamos fechar o arquivo\n");
+    fclose(arq);
+    }
+  for (i=0;i<10;i++) printf("v[%i]=%d\n",i,v[i]);
+}
+\end{verbatim}
+ou ainda,
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq; 
+  int v[10];
+  int i;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    for (i=0;i<10;i++) fread(&v[i],sizeof(int),1,arq);
+    printf("Leu! Vamos fechar o arquivo\n");
+    fclose(arq);
+    }
+  for (i=0;i<10;i++) printf("v[%i]=%d\n",i,v[i]);
+}
+\end{verbatim}
+O retorno das funções \verb|fread| e \verb|fwrite| são inteiro contendo o número de itens lidos com sucesso. Observe:
+\begin{verbatim}
+#include <stdio.h>
+
+int main(void)
+{
+  FILE *arq; 
+  int v[10];
+  int i;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    printf("Leu %zu inteiros\n",fread(v,sizeof(int),10,arq));
+    fclose(arq);
+    }
+  for (i=0;i<10;i++) printf("v[%i]=%d\n",i,v[i]);
+}
+\end{verbatim}
+
+As vezes queremos ler um arquivo e não sabemos o tamanho de antemão. Nesse caso, identificamos o fim do arquivo com a função \verb|feof|, que entra um ponteiro para arquivo e retorna um valor lógico indicando se está ou não no fim do arquivo.
+\begin{ex}\label{ex:le}
+Implemente um código que entre na linha de comando alguns números, escreva todos eles em arquivo binário.  Em seguida, faça um programa que lê o arquivo criado e escreva todos os números na tela.
+\end{ex}
+Programa que escreve em arquivo alguns números digitados na linha de comando:
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char **argv)
+{
+  double v[20];
+  FILE *arq; 
+  int i=0;
+  while (argv[i+1]!=NULL) 
+    {
+    v[i]=atof(argv[i+1]);
+    i++;
+    }
+  arq=fopen("saida.dat","w+b");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");
+    printf("Escreveu %zu números\n",fwrite(v,sizeof(double),argc-1,arq));
+    fclose(arq);
+    printf("Arquivo fechado com sucesso\n");
+    }
+}
+\end{verbatim}
+Programa que lê o arquivo anterior e escreve na tela
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+  double v[20],*p=v;
+  FILE *arq; 
+  int i,ch,total=0;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");  
+    while ((ch=fread(p,sizeof(double),1,arq))!=0)
+    {
+    total+=ch;
+    p++;
+    }
+    fclose(arq);
+    printf("Arquivo fechado com sucesso\n");
+    }
+printf("total=%d\n",total);
+for (i=0;i<total;i++) printf("%f\n",v[i]);
+}
+\end{verbatim}
+ou, equivalentemente,
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+  double v[20],*p=v;
+  FILE *arq; 
+  int i,ch,total=0;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");  
+    //while ((ch=fread(p,sizeof(double),1,arq))!=0)
+    do
+    {
+    ch=fread(p,sizeof(double),1,arq);
+    total+=ch;
+    p++;
+    }while(feof(arq)==0);
+    fclose(arq);
+    printf("Arquivo fechado com sucesso\n");
+    }
+printf("total=%d\n",total);
+for (i=0;i<total;i++) printf("%f\n",v[i]);
+}
+\end{verbatim}
+
+\section{Acesso direto e acesso sequencial}
+Até o momento nós abrimos os arquivos e lemos sequencialmente a partir do início, isto é, fizemos acesso sequencial. Agora, pretendemos ler uma posição do arquivo sem lê-lo desde o início, isto é, pretendemos acessar diretamente um elemento. Os comandos úteis para se posicionarmos ao longo do arquivo são: \verb|ftell|, que entra um ponteiro para arquivo e retorna a posição e \verb|rewind|, que entra um arquivo e o posiciona o início. 
+\begin{ex}
+Reescreva um código que lê o arquivo gerado no exemplo \ref{ex:le}, depois lê o primeiro número novamente.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+  double v[20],*p=v,first;
+  FILE *arq; 
+  int i,ch;
+  long int total;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");  
+    printf("%ld\n",total=ftell(arq));
+    while ((ch=fread(p,sizeof(double),1,arq))!=0)
+    {
+    p++;
+    }
+    printf("%ld\n",total=ftell(arq));
+    rewind(arq);
+    printf("%ld\n",ftell(arq));
+    fread(&first,sizeof(double),1,arq);
+    printf("%ld\n",ftell(arq));
+    fclose(arq);
+    printf("Arquivo fechado com sucesso\n");
+    }
+  printf("%ld\n",total/=8);
+  for (i=0;i<total;i++) printf("%f\n",v[i]);
+  printf("first=%f\n",first);
+}
+\end{verbatim}
+
+A função usada para posicionamento dentro do arquivo é a 
+\begin{verbatim}
+int fseek(FILE *arq,long int salto, int origem)
+\end{verbatim}
+onde
+\begin{itemize}
+ \item \verb|FILE| é um ponteiro para arquivo.
+ \item \verb|salto| é o número de bytes que desejamos andar (positivo para frente e negativo para trás).  
+ \item \verb|origem| é o local de onde queremos saltar, podemos assumir os seguintes valores:
+ \subitem \verb|SEEK_SET| salto realizado a partir da origem do arquivo.
+ \subitem \verb|SEEK_CUR| salto realizado a partir da posição atual.
+ \subitem \verb|SEEK_END| salto realizado a partir da fim do arquivo.
+ \end{itemize}
+\begin{ex}
+Reescreva um código que lê o arquivo gerado no exemplo \ref{ex:le}, depois lê somente os três últimos.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+  double v[20],*p=v,last[3];
+  FILE *arq;
+  int i,ch;
+  long int total;
+  arq=fopen("saida.dat","rb");
+  if (arq==NULL) 
+    printf("Não conseguiu abrir o arquivo\n");
+  else 
+    {
+    printf("Arquivo aberto com sucesso\n");  
+    printf("%ld\n",total=ftell(arq));
+    while ((ch=fread(p,sizeof(double),1,arq))!=0)
+    {
+    p++;
+    }
+    printf("%ld\n",total=ftell(arq));
+    fseek(arq,-24,SEEK_END);
+    printf("onde estou? %ld\n",ftell(arq));
+    fread(last,sizeof(double),3,arq);
+    fclose(arq);
+    printf("Arquivo fechado com sucesso\n");
+    }
+  printf("%ld\n",total/=8);
+  for (i=0;i<total;i++) printf("%f\n",v[i]);
+  printf("\n");
+  for (i=0;i<3;i++) printf("%f\n",last[i]);
+}
+\end{verbatim}
+\begin{ex}
+Vamos resolver o exemplo \ref{ex_Jacobi_2} novamente imprimindo a solução em arquivo. Vamos usar o mesmo código, ampliando apenas as linhas que salvam em arquivo binário.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+#define N 101 /* dimensão do sistema*/
+
+double norma_2(double x[N])
+{
+  int i;
+  double norma2=x[0]*x[0]/(2*(N-1));
+  for (i=1;i<N-1;i++)
+  {
+    norma2+=x[i]*x[i]/(N-1);
+  }
+  norma2+=x[N-1]*x[N-1]/(2*(N-1));
+  return sqrt(norma2);	
+}
+void Iteracao(double u_antigo[N],double u_atual[N],double matriz[N][N], double vetor[N])
+{
+  double aux;
+  int i,j;
+  for (i=0;i<N;i++)
+  {
+    aux=0;
+    for (j=0;j<i;j++)
+    aux+=matriz[i][j]*u_antigo[j];
+    for (j=i+1;j<N;j++)
+    aux+=matriz[i][j]*u_antigo[j];
+    u_atual[i]=(vetor[i]-aux)/matriz[i][i];
+  }
+}
+void Jacobi(double tolerancia,double u_atual[N],double vetor[N],double matriz[N][N],double malha[N])
+{
+
+  double u_antigo[N],dif[N];
+  int i,controle=3;
+
+  //chute inicial
+  for (i=0;i<N;i++)u_antigo[i]=0;
+
+  //iteração
+  while (controle)
+  {
+    Iteracao(u_antigo,u_atual,matriz,vetor);
+    for (i=0;i<N;i++) dif[i]=u_atual[i]-u_antigo[i];
+    if (norma_2(dif)<tolerancia) controle--;
+    else controle=3;
+    for (i=0;i<N;i++) u_antigo[i]=u_atual[i];
+  }
+  return;
+}
+
+double solucao_analitica(double x)
+{
+return -25.*(x-1.)*(x-1.)*(x-1.)*(x-1.)/3-25.*x/3+25./3.;
+}
+
+main (void)
+{
+  int i,j;
+  double tolerancia=1e-5,solucao[N],sol_anal[N];
+  double matriz[N][N];
+  double vetor[N],x[N];
+  //malha
+  double h=1./(N-1); 
+  for (i=0;i<N;i++) 
+    {
+    x[i]=i*h;
+    sol_anal[i]=solucao_analitica(x[i]);
+    }
+  //matriz e vetor
+  for (i=0;i<N;i++) for (j=0;j<N;j++) matriz[i][j]=0;
+  matriz[0][0]=1;
+  vetor[0]=0;
+  for (i=1;i<N-1;i++) 
+  {
+    matriz[i][i]=-2;
+    matriz[i][i+1]=1;
+    matriz[i][i-1]=1;
+    vetor[i]=-100*h*h*(x[i]-1)*(x[i]-1);
+  }
+  matriz[N-1][N-1]=1;
+  vetor[N-1]=0;
+
+  Jacobi(tolerancia,solucao,vetor,matriz,x);
+  //erro médio
+  double erro=0;
+  for (i=0;i<N;i++) erro+=fabs(solucao[i]-sol_anal[i]);
+  erro/=N;
+  printf("erro médio = %f\n",erro);
+  for (i=0;i<N;i++)     printf("u_%d=%f, u(x[%d]) = %f\n",i,solucao[i],i, sol_anal[i]);
+  FILE *arq;
+  arq=fopen("saida.dat","w+b");
+  if (arq==NULL) 
+    printf("Erro ao abrir arquivo\n");
+  else
+    {
+    printf("Arquivo aberto\n");
+    fwrite(solucao,sizeof(double),N,arq);
+    fwrite(sol_anal,sizeof(double),N,arq);
+    printf("Gravou\n");
+    fclose(arq);
+    }
+}
+\end{verbatim}
+Observe um código em scilab para ler e fazer o gráfico das duas soluções:
+\begin{verbatim}
+N=101;
+x=linspace(0,1,N);
+arq=mopen('/home/pasta/subpasta/subsubpasta/saida.dat','rb')
+Snum=mget(N,'d',arq)
+Sanal=mget(N,'d',arq)
+mclose(arq)
+plot(x,Snum)
+plot(x,Sanal,'red')
+\end{verbatim}
+
+
+\section{Exercícios}
+
+\begin{exer}
+Escreva um programa que copia o conteúdo de um arquivo para outro arquivo. Faça versões que lê e escreve arquivo de texto e arquivo binário.
+\end{exer}
+\begin{exer}
+Abra o gedit e escreva o seguinte arquivo:
+\begin{verbatim}
+Artur Avila
+O Instituto
+A PPGMAp
+O DMPA
+\end{verbatim}
+Salve o arquivo com um nome de sua preferência. Agora escreve um programa para ler o arquivo e escrever na tela o seguinte resultado:
+\begin{verbatim}
+linha 1: Artur Avila
+linha 2: O Instituto
+linha 3: A PPGMAp
+linha 4: O DMPA
+\end{verbatim}
+\end{exer}
+\begin{exer}
+Faça um programa que lê um arquivo binário e escreve o menor e o maior número na tela. 
+\end{exer}
+\begin{exer}
+Faça um programa que entra uma ou duas strings na linha de comando, sendo uma delas sempre o nome de um arquivo binário que será lido. O código vai somar os números lidos. Se entrar duas strings, uma será o nome do arquivo e a outra terá três opções: \verb|-p| soma apenas os pares, \verb|-i| soma apenas os ímpares e \verb|-t| soma todos. Se entrar apenas uma string a resposta do programa será a mesma de \verb|-t|.
+\end{exer}
+ 
+\begin{exer}
+Resolva novamente o exercício \ref{exerc_14.1} usando a seguinte estratégia:
+\begin{itemize}
+ \item Resolva primeiro o problema linear
+ $$\left\{\begin{array}{l}-u_{xx}=100,~~ 0<x<2.\\
+u(0)=0\\
+u(2)=10\end{array}
+\right.
+$$
+e salve a solução em arquivo binário.
+ \item Leia a solução do item anterior e use-a como chute inicial para o problema não linear
+ $$\left\{\begin{array}{l}-u_{xx}=100- \frac{u^4}{10000},~~ 0<x<2.\\
+u(0)=0\\
+u(2)=10\end{array}
+\right.
+$$
+Salve a solução em arquivo e use-a para fazer gráfico no scilab.
+\end{itemize}
+\end{exer}
+
+\begin{exer}
+Resolva novamente os exercícios \ref{edo1} e \ref{edo2}, imprima a solução em arquivo e faça o gráfico no scilab.
+\end{exer}
+
+\begin{exer}(Ajuste linear - mínimos quadrados)
+
+Dada $m$ funções $\{f_1(x), f_2(x), \dotsc, f_m(x)\}$ e um conjunto de $n$ pares ordenados $\{(x_1, y_1)$, $(x_2, y_2)$, $\ldots$, $(x_n, y_n)\}$, o problema de mínimos quadrados linear consiste em calcular os coeficientes $a_1$, $a_2$, $\ldots$, $a_m$ tais que a função dada por
+\begin{equation}
+  f(x) = \sum_{j=1}^m a_jf_j(x) = a_1f_1(x)+a_2f_2(x)+\ldots+a_mf_m(x)
+\end{equation}
+minimiza o resíduo
+\begin{equation}
+  R= \sum_{i=1}^n \left[f(x_i)-y_i\right]^2.
+\end{equation}
+Aqui, a minimização é feita por todas as possíveis escolhas dos coeficientes $a_1$, $a_2$, $\ldots$, $a_m$. Esse problema é equivalente a encontrar a solução o sistema $Ma=w$, onde a matriz $M$ é dada por:
+\begin{eqnarray*}
+M = \begin{bmatrix}
+\sum\limits_{i=1}^n f_1(x_i)^2 & \sum\limits_{i=1}^n f_2(x_i) f_1(x_i) & \!\cdots\! & \sum\limits_{i=1}^n f_m(x_i) f_1(x_i)\\
+\sum\limits_{i=1}^n f_1(x_i) f_2(x_i)&\sum\limits_{i=1}^n f_2(x_i)^2 & \!\cdots\! & \sum\limits_{i=1}^n f_m(x_i)  f_2(x_i)\\
+\sum\limits_{i=1}^n f_1(x_i) f_3(x_i)&\sum\limits_{i=1}^n f_2(x_i)f_3(x_i) & \!\cdots\! & \sum\limits_{i=1}^n f_m(x_i)  f_3(x_i)\\
+\vdots & \vdots & \ddots & \vdots\\
+\sum\limits_{i=1}^n f_1(x_i) f_m(x_i)&\sum\limits_{i=1}^n f_2(x_i)f_m(x_i) & \!\cdots\! & \sum\limits_{i=1}^n f_m(x_i)^2
+\end{bmatrix}.
+\end{eqnarray*}
+e os vetores $a$ e $w$ são dados por
+\begin{eqnarray*}
+a=\left[
+\begin{array}{c}
+a_1\\
+a_2\\
+\vdots\\
+a_m
+\end{array}
+\right]\qquad\text{e}\qquad w=\left[\begin{array}{c}
+\sum\limits_{i=1}^n f_1(x_i) y_i\\
+\sum\limits_{i=1}^n f_2(x_i) y_i\\
+\sum\limits_{i=1}^n f_3(x_i) y_i\\
+\vdots\\
+\sum\limits_{i=1}^n f_m(x_i) y_i
+\end{array}
+\right].
+\end{eqnarray*}
+Mais simplificadamente, observamos que $M=V^TV$ e $w=V^T y$, onde a matriz $V$ é dada por:
+\begin{equation}
+  V=\begin{bmatrix}
+    f_1(x_1)&f_2(x_1) & \cdots & f_m(x_1)\\
+    f_1(x_2)&f_2(x_2) & \cdots & f_m(x_2)\\
+    f_1(x_3)&f_2(x_3) & \cdots & f_m(x_3)\\
+    \vdots & \vdots & \ddots & \vdots\\
+    f_1(x_n)&f_2(x_n) & \cdots & f_m(x_n)
+  \end{bmatrix}
+\end{equation}
+e $y$ é o vetor coluna $y = (y_1, y_2, \dotsc, y_N)$. Assim, o problema de ajuste se reduz a resolver o sistema linear $Ma=w$, ou $V^TVa = V^T y$. 
+
+Implemente um código para calcular os coeficientes de uma reta que melhor se ajusta a $N$ pontos no plano. Imprime o resultado em arquivo e faça gráfico da solução no scilab.
+\end{exer}

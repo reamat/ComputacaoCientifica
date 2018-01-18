@@ -1,0 +1,261 @@
+\chapter{Variáveis Globais, divisão do código e outros aspectos}
+
+\section{Divisão do código em vários arquivos}
+É possível quebrar um código em vários arquivos. Basta compilar todos os códigos juntos.
+\begin{ex}\label{ex:int_dup_2}Implemente um código resolver novamente o exemplo \ref{ex:int_dup}, que consiste em calcular a integral
+$$
+\int_0^1f(t) dt,
+$$
+onde
+$$
+f(t)=\int_0^t \sin(t-\tau) e^{-\tau^2}d\tau.
+$$
+Use um arquivo para o main e outro com as funções.
+\end{ex}
+O primeiro arquivo foi salvo como \verb|main.c|
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+double Boole(double (*f)(double, double),double a,double b, int N,double *param);
+double integrando(double tau, double t);
+double f(double t,double tau);
+
+void main(void)
+{
+  int N=5;
+  double I1=0,I2=0,erro=0,a=0,b=1,tol=1e-10,param[1]={0};
+  I1=Boole(f,a,b,N,param);
+  int cont=0;
+  do
+  {
+  cont++;
+  N=2*N-1;
+  I2=Boole(f,a,b,N,param);
+  erro=fabs(I2-I1);
+  I1=I2;
+  }while (erro>tol);
+  printf("O valor da integral é %f\n",I2);
+}
+\end{verbatim}
+O segundo arquivo foi salvo como \verb|func.c|
+\begin{verbatim}
+#include <math.h>
+double Boole(double (*f)(double, double),double a,double b, int N,double *param)
+{
+  int i;
+  double h=(b-a)/(4*N),Int=0,t=param[0];
+  
+  Int=14./45.*(*f)(a,t);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*(*f)(a+h,t);
+    Int+=24./45.*(*f)(a+2*h,t);
+    Int+=64./45.*(*f)(a+3*h,t);
+    Int+=28./45.*(*f)(a+4*h,t);
+    a+=4*h;
+  }
+  Int-=14./45.*(*f)(a,t);
+return h*Int;
+}
+double integrando(double tau, double t)
+{
+  return sin(t-tau)*exp(-tau*tau);
+}
+double f(double t,double tau)
+{
+  int N=5;
+  double I1=0,I2=0,erro=0,a=0,b=t,tol=1e-10,param[1]={t};
+  I1=Boole(integrando,a,b,N,param);
+  int cont=0;
+  do
+  {
+  cont++;
+  N=2*N-1;
+  I2=Boole(integrando,a,b,N,param);
+  erro=fabs(I2-I1);
+  I1=I2;
+  }while (erro>tol);
+  return I2;
+}
+\end{verbatim}
+Compilamos com a linha de comando
+\begin{verbatim}
+gcc main.c func.c -lm
+\end{verbatim}
+
+\section{Makefile}
+Imagine que dividimos o trabalho em diversos arquivos e estamos usando várias bibliotecas externas que precisam aparecer explicitamente na linha de comando para compilação. Provavelmente, estaremos interessados em simplificar o uso da linha de comando que compila o trabalho, ou seja, construir um Makefile. Na mesma pasta onde salvamos os arquivos do exemplo \ref{ex:int_dup_2}, vamos salvar um arquivo com o nome \verb|Makefile| (sem extensão) com o seguinte conteúdo:
+\begin{verbatim}
+main: main.c func.c 
+	gcc main.c func.c -lm -oprog
+\end{verbatim}
+Agora, na linha de comando, digite apenas
+\begin{verbatim}
+make
+\end{verbatim}
+Execute o programa com a linha
+\begin{verbatim}
+./prog
+\end{verbatim}
+
+
+
+\section{Variáveis globais}
+As vezes estamos interessados em trabalhar com variáveis globais, que podem ser enxergadas por qualquer função do código sem precisar ser passada como parâmetro.
+\begin{ex}\label{ex:ordena}
+Implemente um código com duas funções, uma que ordena os pontos de um vetor de $n$ posições e outra que coloca o valor da soma de todos os elementos de vetor de $n$ posições na posição $n+1$. Defina um vetor como variável global.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+double *x;
+int N;
+
+void troca(double *a,double *b)
+{
+  double aux=*a;
+  *a=*b;
+  *b=aux;
+}
+
+void ordena()
+{
+  int i,ordena=1;
+ 
+  do
+  { 
+    for (ordena=i=0;i<N-1;i++)
+      if (x[i]>x[i+1])
+      {
+      troca(&x[i],&x[i+1]);
+      ordena=1;
+      }
+  }while (ordena);
+}
+
+void coloca_soma_na_ultima_posicao()
+{
+  double soma=0;
+  int i;
+  for (i=0;i<N;i++) soma+=x[i];
+  N++;
+  x=realloc(x,N*sizeof(double));
+  x[N-1]=soma;
+}
+
+void main(int argc,char **argv)
+{
+  N=argc-1;
+  if (N==0)
+  {
+  printf("Entre com alguns números na linha de comando");
+  return;
+  }
+  int i;
+  x=malloc(N*sizeof(double));
+  for (i=0;i<N;i++)
+  {
+  x[i]=atof(argv[i+1]);
+  printf("x[%d]=%f\n",i,x[i]);
+  }
+  ordena();
+  for (i=0;i<N;i++) printf("x[%d]=%f\n",i,x[i]);
+  coloca_soma_na_ultima_posicao();
+  for (i=0;i<N;i++) printf("x[%d]=%f\n",i,x[i]);
+  ordena();
+  for (i=0;i<N;i++) printf("x[%d]=%f\n",i,x[i]);
+  coloca_soma_na_ultima_posicao();
+  for (i=0;i<N;i++) printf("x[%d]=%f\n",i,x[i]);
+}
+\end{verbatim}
+
+
+\section{time}
+Uma forma de calcular o tempo de execução do programa é usar \verb|time| na linha de comando:
+\begin{verbatim}
+time ./a.out
+\end{verbatim}
+No entanto, se estamos interessados em estimar o tempo de processamento de um pedaço do código, podemos usar as funções da biblioteca \verb|time.h|. A bilioteca possui os tipos específicos de variáveis para trabalhar com tempo, a saber, \verb|time_t| e \verb|clock_t|. Descrevemos duas das função aqui:
+\begin{itemize}
+ \item \verb|clock_t clock(void)| retorna o tempo de processamento desde o início do programa em uma unidade de processamento. Basta dividir por \verb|CLOCKS_PER_SEC| para obter o valor em segundos.
+ \item \verb|time_t time(time_t *timer)| salva a hora atual no formato \verb|time_t|.
+ \item \verb|double difftime(time_t time1, time_t time2)| retorna em segundos a diferença entre time1 e time2.
+\end{itemize}
+\begin{ex}
+Implemente um código que imprime o tempo para calcular cem mil vezes logarítmo de um número.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+
+void main(void)
+{
+  time_t tempo;
+  tempo=time(NULL);
+  double x;
+  int i;
+  for (i=0;i<100000;i++) 
+  {
+    x=log(i+1);
+    printf("%f\n",x);
+  }
+  printf("%d s\n",(int) (time(NULL)-tempo));
+}  
+\end{verbatim}
+Alternativamente,
+\begin{verbatim}
+#include <stdio.h>
+#include <time.h>
+#include <math.h>
+
+int main(void)
+{
+  int i;
+  double x;
+  time_t inicio_t, fim_t;
+
+  time(&inicio_t);
+  for (i=0;i<100000;i++) 
+  {
+    x=log(i+1);
+    printf("%f\n",x);
+  }
+  time(&fim_t);
+  printf("Passaram-se %.0lf segundos\n", (double)difftime(fim_t, inicio_t));
+  return 0;
+}
+\end{verbatim}
+
+\section{Constante}
+Quando definimos uma constante, significa que não desejamos que a variável troque de valor ao longo da rotina. Nesse caso, usamos a palabra-chave \verb|const| antes do tipo de variável. Observe o código abaixo:
+\begin{verbatim}
+#include <stdio.h>
+
+void main(void)
+{
+  const int x=2;
+  printf("%d\n",x);
+  x=3;
+  printf("%d\n",x);
+}
+\end{verbatim}
+que dá um erro de compilação
+\begin{verbatim}
+teste.c: In function ?main?:
+teste.c:7:3: error: assignment of read-only variable ?x?
+   x=3;
+\end{verbatim}
+
+
+
+\section{Exercícios}
+\begin{exer}
+Resolva o exemplo \ref{ex:integral} novamente, mas use uma variável global para salvar os valores de $F(x)$.
+\end{exer}
+
+
+
+

@@ -1,0 +1,223 @@
+
+
+\chapter{Ponteiros}
+\section{Endereços}
+Uma variável é armazenada na memória do computador com três informações básicas: 
+\begin{itemize}
+ \item O tipo está relacionado ao tamanho em bytes da posição - \verb|double| tem 64 bits (ou 8 bytes);
+ \item O endereço se refere a posição da memória onde está localizada - dado por um hexadecimal;
+ \item O valor da variável que é armazenada nesse endereço.
+\end{itemize}
+O nome da variável é a forma fácil do programador se comunicar com a máquina. O compilador se encarrega de converter o nome da variável em posição da memória ou valor atribuído. Para chamar o valor atribuído, basta usar o próprio nome da variável. Agora, para obter o endereço de memória da variável, usa-se o operador \verb|&|.
+\begin{ex}
+Escreva um programa que lê um inteiro e imprime o seu valor e seu endereço na memória.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+int main(void)
+{
+  int x;
+  printf("digite o valor de x\n\n");
+  scanf("%d",&x);
+  printf("O valor de x é %d\n",x);
+  printf("O endereço de x na memória %p\n",&x);
+}
+\end{verbatim}
+Na linha \verb|int x;| nós definimos uma variável com o nome $x$ do tipo \verb|int|. Nesse momento, foi alocado um espaço na memória para armazenar $x$, que tem um certo endereço. Na linha \verb|scanf("%d",&x)| foi atribuído um certo valor para $x$. 
+
+Observamos que as variável podem ocupar vários bytes de memória e, nesse caso, o endereço da variável é aquele do primeiro byte.
+\section{Ponteiros}
+Ponteiros são variáveis que ocupam uma posição da memória mas estão preparados para armazenar endereços de outras variáveis. Usamos um asterístico para definir uma variável do tipo ponteiro. Por exemplo, um ponteiro apontado para um \verb|double| por ser definido por \verb|double *p;|. 
+\begin{ex}\label{ex_pont_1}
+Escreva um programa que lê um inteiro e armazena o endereço num ponteiro. 
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+int main(void)
+{
+  int x;
+  int *y=NULL;
+  printf("digite o valor de x\n\n");
+  scanf("%d",&x);
+  y=&x;
+  printf("O valor de x é %d\n",x);
+  printf("O endereço de x na memória %p\n",y);
+}
+\end{verbatim}
+Observe o detalhe na linha \verb|y=&x;|, onde o ponteiro \verb|y| recebe o endereço da variável \verb|x|. A linha \verb|int *y=NULL;| pode ser substituída por \verb|int *y;|. A diferença é que na primeira dissemos explicitamente que o ponteiro \verb|int| não está apontado para nenhuma variável e, na segunda não demos carga inicial. É sempre indicado dar carga inicial em ponteiros para produzir códigos mais seguros. 
+
+Se definirmos uma variável do tipo ponteiro para \verb|double| com o nome \verb|p|, então \verb|*p| é o valor apontado pelo ponteiro. Observe uma versão do código do exemplo \ref{ex_pont_1} que produz o mesmo resultado:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+int main(void)
+{
+  int x;
+  int *y=NULL;
+  printf("digite o valor de x\n\n");
+  scanf("%d",&x);
+  y=&x;
+  printf("O valor de x é %d\n",*y);
+  printf("O endereço de x na memória %p\n",y);
+}
+\end{verbatim}
+A linha \verb|printf("O valor de x é %d\n",*y);| imprime o valor apontado pelo ponteiro \verb|y|, que é o valor de \verb|x|.
+
+O ponteiro é uma variável como qualquer outra, o que permite a definição de um ponteiro que aponta outro ponteiro.
+\begin{ex}
+Escreva um programa define um \verb|double|, depois um ponteiro para esse \verb|double|, depois um ponteiro para o primeiro ponteiro. 
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+int main(void)
+{
+  double x,*y,**z;
+  x=2.3;
+  y=&x;
+  z=&y;
+  printf("O valor de x é %f\n",x);
+  printf("O endereço de x é %p\n",&x);
+  printf("O valor de y é %p\n",y);
+  printf("O endereço de y é %p\n",&y);
+  printf("O valor apontado por y é %f\n",*y);
+  printf("O valor de z é %p\n",z);
+  printf("O endereço de z é %p\n",&z);
+  printf("O valor apontado por z é %p\n",*z);
+  printf("O valor apontado pela variável que está apontada por z é %f\n",**z);
+}
+\end{verbatim}
+
+A instrução que atribui um valor para a uma variável através do ponteiro também é funciona.
+\begin{ex}
+Escreva uma programa que define uma variável sem atribuir valor, depois define um ponteiro apontado para essa variável e, finalmente, atribui valor para a variável usando o ponteiro.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+int main(void)
+{
+  double x;
+  double *y=&x;
+  *y=2.4;
+  printf("O valor de x é %f\n",x);
+}
+\end{verbatim}
+
+A necessidade de indicar o tipo de variável para onde o ponteiro aponta é devido ao tamanho de cada tipo de variável, que pode ocupar vários bytes. O ponteiro aponta para o primeiro byte e a informação do tipo diz o tamanho da variável em bytes.
+
+O endereço de um vetor \verb|v| é dado pelo endereço do seu primeiro elemento \verb|&v[0]|, que também pode ser chamado por \verb|v|. Naturalmente, cada elemento também tem um endereço, sequencialmente a partir do primeiro. 
+\begin{ex}
+Escreva um programa que define um vetor e imprime seu endereço.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+int main(void)
+{
+  double x[3]={2.3,3.1,-1.2};
+  printf("O primeiro elemento é %f\n",x[0]);
+  printf("Esse é o endereço do primeiro elemento do vetor %p\n",&x[0]);
+  printf("Esse é o endereço do vetor %p\n",x);
+  printf("Esse é o endereço do segundo elemento do vetor %p\n",&x[1]);
+  printf("Esse é o endereço do terceiro elemento do vetor %p\n",&x[2]);  
+}
+\end{verbatim}
+
+\section{Incremento e decremento de ponteiros}
+Um ponteiro avança/recua o tamanho do tipo de variável para cada unidade de incremento/decremento. A diferença entre dois ponteiros diz a distância entre bytes entre eles. A comparação entre ponteiros diz quem está mais a direita.
+\begin{ex}
+Escreva um código que incremente/decremente ponteiros para vetores de \verb|double| e imprime os valores, endereços, diferenças, etc.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main (void)
+{
+  double v[3]={1.1,2.2,3.3}, *pv=v,*pv2;
+  printf("O endereço do vetor v é %p\n",v);//hexadecimal
+  printf("O endereço do vetor v é %ld\n",(long int) v);//decimal
+  printf("O ponteiro *pv aponta para o endereço %p\n",pv);//hexadecimal
+  printf("O ponteiro *pv aponta para o endereço %ld\n",(long int) pv);//decimal
+  printf("O endereço de *pv é %ld\n",(long int) &pv);//decimal
+  printf("O valor apontado por *pv é %f\n",*pv);
+  pv++;
+  printf("O endereço de *pv é %ld\n",(long int) &pv);//decimal
+  printf("O ponteiro *pv aponta para o endereço %ld\n",(long int) pv);//decimal
+  printf("O valor apontado por *pv é %f\n",*pv);
+  printf("O ponteiro caminhou %ld bytes\n",sizeof(double));
+  pv2=pv+2;
+  printf("O valor apontado por *pv2 é %f\n",*pv2);
+  printf("A diferença entre pv2 e pv é %ld double\n",pv2-pv);
+  pv2--;
+  printf("O valor apontado por *pv2 é %f\n",*pv2);
+  if (pv2<pv) printf("pv2 está à esquerda de pv\n");
+  else printf("pv2 está à direita de pv\n");
+}
+\end{verbatim}
+
+
+
+\section{Ponteiros - acesso aos elementos de um vetor}
+Podemos usar ponteiros para acessar os elementos de um vetor.
+\begin{ex}
+Declare um vetor com quatro números e acesse o terceiro via notação de vetor e via ponteiro.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main (void)
+{
+  double a[4]={1,2,3,4},*p=a;
+  printf("O terceiro número é %f\n",a[2]);//acesso normal
+  printf("O terceiro número é %f\n",*(a+2));//acesso via endereço
+  printf("O terceiro número é %f\n",*(p+2));//acesso via ponteiro
+  printf("O terceiro número é %f\n",p[2]);//acesso via ponteiro
+}
+\end{verbatim}
+A última notação \verb|p[2]| pode parecer a mais estranha, pois usamos a notação de vetor para acessar o valor dois doubles a direita de onde aponta p.
+
+
+\section{Exercícios}
+\begin{exer}Escreva um programa para calcular o limite da sequência
+$$\left\{
+\begin{array}{l}\displaystyle
+ x_0=\frac{1}{3}\\\\ \displaystyle
+ x_{n}=\frac{x_{n-1}+1}{4},\qquad n=1,2,...
+\end{array}\right.
+$$
+Siga os seguintes passos:
+\begin{itemize}
+ \item Calcule $x_n$ em termos de $x_{n-1}$ e calcule a diferença $|x_n-x_{n-1}|$. Execute até que a diferença seja menor que $10^{-10}$.
+ \item Defina ponteiros apontados para $x_n$ e $x_{n-1}$ e, quando for atualizar a iteração, não troque os valores de $x_n$ e $x_{n-1}$ de posição na memória, mas apenas inverta os ponteiros.
+\end{itemize}
+\end{exer}
+\begin{exer}
+Digite um programa que lê dois números tipo float e imprima o maior. Faça uma função que entra dois ponteiros apontados para float e compare os valores apontados.
+\end{exer}
+\begin{exer}
+Sem implementar, escreva o que o programa abaixo vai escrever na tela. Depois implemente e teste.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+main (void)
+{
+  double a=0.9,*b=&a,**c=&b;
+  printf("%f, %p, %p\n",a,b,c);
+  printf("%p, %p, %p\n",&a,&b,&c);
+  printf("%f, %p, %f\n",*b,*c,**c);
+}
+\end{verbatim}
+Naturalmente, você não saberá qual o número que será impresso em um endereço, pois o computador vai automaticamente alocar uma posição da memória, mas certamente você poderá comparar os endereços entre si.
+\end{exer}

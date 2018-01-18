@@ -1,0 +1,988 @@
+\chapter{Bibliotecas de Computação Científica}
+
+\section{GSL - quadraturas}
+A GSL (GNU Scientific Library) é uma biblioteca livre para C e C++ com milhares de rotinas matemáticas envolvendo funções especiais, mínimos quadrados, integração numéricas, autovalores e autovetores, etc. A página do projeto  https://www.gnu.org/software/gsl/ descreve a documentação sobre instalação e uso do pacote e o manual https://www.gnu.org/software/gsl/doc/html/index.html detalha o uso das rotinas.
+
+Vamos começar trabalhando com as rotinas de integração numérica: https://www.gnu.org/software/gsl/doc/html/integration.html. O uso das rotinas de integração exigem a inclusão do pacote \verb|gsl_integration.h|.
+
+Uma das rotinas mais simplesde integração é a \verb|gsl_integration_qng|. O nome da rotina tem um significado: 
+\begin{itemize}
+ \item \verb|q| $\rightarrow$ quadrature routine
+ \item \verb|n| $\rightarrow$ non-adaptive integrator
+ \item \verb|g| $\rightarrow$ general integrand
+\end{itemize}
+A sintaxe dessa rotina é:
+\begin{verbatim}
+int gsl_integration_qng(const gsl_function * f, double a, double b, double epsabs, double epsrel, 
+double * result, double * abserr, size_t * neval) 
+\end{verbatim}
+onde
+\begin{itemize}
+\item \verb|*f| é um ponteiro para função do tipo gsl (\verb|gsl_function|). Essa função aceita passagem de parâmetros.
+ \item \verb|a| é o limite inferior de integração;
+  \item \verb|b| é o limite superior de integração;
+ \item \verb|epsabs| é a tolerância absoluta;
+ \item \verb|epsrel| é o tolerância relativa;
+ \item \verb|result| é o resultado da integral
+ \item \verb|abserr| estimativa do erro absoluto;
+ \item \verb|neval| é o número de vezes que a função foi calculada.
+\end{itemize}
+O esquema de integração é Gauss-Konrad com número fixo de pontos: 10, 21, 43 ou 87. Se a integral apresentar estimativa de erro grande, escolha outra rotina de integração.
+\begin{ex}
+Calcule a integral
+$$
+\int_0^1 e^{-x^2}dx
+$$
+usando a rotina \verb|qng| da biblioteca gsl.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+
+double f(double x, void *params)
+{
+return exp(-x*x);
+}
+
+void main()
+{
+double params,result,abserr;
+size_t neval;
+gsl_function F;
+F.function=&f;
+F.params=&params;
+gsl_integration_qng(&F, 0, 1, 1e-10, 1e-10,&result, &abserr, &neval);
+printf("resultado=%f, erro=%e, n_calculos=%zu\n",result,abserr,neval);
+}
+\end{verbatim}
+Compile o código com a linha
+\begin{verbatim}
+gcc teste.c -lm -lgsl -lgslcblas
+\end{verbatim}
+Uma função para ser integrada no gsl deve ter a formato \verb|double f(double x, void *params)|, onde \verb|x| é a variável de integração e \verb|*params| é um ponteiro para uma lista de parâmetros da função. A definição da funçao do tipo gsl se dá pela linha \verb|gsl_function F;|. Em seguida, usa-se a linha \verb|F.function=&f;| para configurar a função gsl \verb|F|, associando ao ponteiro para a função \verb|f|. A linha \verb|F.params=&params;| atribui o vetor \verb|params| a lista de parâmetro da função \verb|F|. No caso acima, nós definimos \verb|double params;|, mas não atribuímos valor algum, pois a função não tem parâmetros.
+\begin{ex}
+Calcule a integral
+$$
+\int_0^1 e^{-\lambda x^2}dx
+$$
+usando $\lambda=.5$ e $\lambda=2$.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+
+double f(double x, void *params)
+{
+double lambda=*((double *) params);
+return exp(-lambda*x*x);
+}
+
+void main()
+{
+double params,result,abserr;
+size_t neval;
+gsl_function F;
+F.function=&f;
+F.params=&params;
+
+params=.5;
+gsl_integration_qng(&F, 0, 1, 1e-10, 1e-10,&result, &abserr, &neval);
+printf("resultado=%f, erro=%f, n_calculos=%zu\n",result,abserr,neval);
+
+params=2;
+gsl_integration_qng(&F, 0, 1, 1e-10, 1e-10,&result, &abserr, &neval);
+printf("resultado=%f, erro=%f, n_calculos=%zu\n",result,abserr,neval);
+}
+\end{verbatim}
+
+A rotina autoadaptativa mais simples é a \verb|gsl_integration_qag|:
+\begin{itemize}
+ \item \verb|q| $\rightarrow$ quadrature routine
+ \item \verb|a| $\rightarrow$ adaptive integrator
+ \item \verb|g| $\rightarrow$ general integrand
+\end{itemize}
+Ela consiste em dividir o intervalo de integração ao meio e, depois, cada um dos subintervalos ao meio outra vez, até a convergência. A sintaxe é
+\begin{verbatim}
+int gsl_integration_qag(const gsl_function * f, double a, double b, double epsabs, double epsrel, 
+size_t limit, int key, gsl_integration_workspace * workspace, double * result, double * abserr)
+\end{verbatim}
+onde
+\begin{itemize}
+\item \verb|*f| é um ponteiro para função do tipo gsl (\verb|gsl_function|). Essa função aceita passagem de parâmetros.
+ \item \verb|a| é o limite inferior de integração;
+  \item \verb|b| é o limite superior de integração;
+ \item \verb|epsabs| é a tolerância absoluta;
+ \item \verb|epsrel| é o tolerância relativa;
+ \item \verb|limit| é o máximo de subintervalos;
+ \item \verb|key| é a regra de integração
+ \subitem \verb|GSL_INTEG_GAUSS15 (key = 1)|;
+ \subitem \verb|GSL_INTEG_GAUSS21 (key = 2)|;
+ \subitem \verb|GSL_INTEG_GAUSS31 (key = 3)|;
+ \subitem \verb|GSL_INTEG_GAUSS41 (key = 4)|;
+ \subitem \verb|GSL_INTEG_GAUSS51 (key = 5)|;
+ \subitem \verb|GSL_INTEG_GAUSS61 (key = 6)|;
+ \item \verb|* workspace| é o espaço na memória para dividir o intervalo e recalcular a integral; 
+ \item \verb|result| é o resultado da integral
+ \item \verb|abserr| estimativa do erro absoluto;
+\end{itemize}
+\begin{ex}\label{ex_gls_int}
+Calcule a integral
+$$
+\int_0^1\frac{1}{\mu}e^{-\frac{r}{\mu} }d\mu 
+$$
+para $r=0.5$ e $r=1$.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+
+double f(double mu, void *params)
+{
+double r=*((double *) params);
+return exp(-r/mu)/mu;
+}
+
+void main()
+{
+double params,result,abserr;
+
+gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
+gsl_function F;
+F.function=&f;
+F.params=&params;
+
+params=.5;
+gsl_integration_qag(&F, 0, 1, 1e-10, 1e-10, 1000,6,w ,&result,&abserr);
+printf("resultado=%f, erro=%e \n",result,abserr);
+
+params=1;
+gsl_integration_qag(&F, 0, 1, 1e-10, 1e-10, 1000,6,w ,&result,&abserr);
+printf("resultado=%f, erro=%e \n",result,abserr);
+
+gsl_integration_workspace_free(w);
+}
+\end{verbatim}
+
+A função \verb|gsl_integration_qags| é adequada para integrandos com singularidades e \verb|gsl_integration_qagp| é adequada para integrandos com singularidades conhecidas. Na sintaxe da primeira função não passa a regra de integração e, na segunda, passa os pontos onde a função é singular junto com os limites de integração. Observe a resolução do exemplo \ref{ex_gls_int} com essas funções.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+
+double f(double mu, void *params)
+{
+double r=*((double *) params);
+return exp(-r/mu)/mu;
+}
+
+void main()
+{
+double params,result,abserr,pontos[2]={0,1};
+
+gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
+gsl_function F;
+F.function=&f;
+F.params=&params;
+
+params=.5;
+gsl_integration_qags(&F, 0, 1, 0, 1e-10, 1000,w ,&result,&abserr);
+printf("resultado=%f, erro=%e \n",result,abserr);
+
+params=1;
+gsl_integration_qagp(&F,pontos,2, 0, 1e-10, 1000,w ,&result,&abserr);
+printf("resultado=%f, erro=%e \n",result,abserr);
+
+gsl_integration_workspace_free(w);
+}
+\end{verbatim}
+
+Agora, estudar as rotinas do gsl que aplicam a quadratura de Gauss-Legendre. As quatro funções têm as seguintes sintaxes:
+\begin{verbatim}
+gsl_integration_glfixed_table * gsl_integration_glfixed_table_alloc(size_t n)
+\end{verbatim}
+e
+\begin{verbatim}
+void gsl_integration_glfixed_table_free(gsl_integration_glfixed_table * t)
+\end{verbatim}
+A primeira função calcula as abscissas e pesos da quadratura de Gauss-Legendre com $n$ pontos. A segunda libera o espaço alocado na memória. A terceira função tem a sintaxe
+\begin{verbatim}
+double gsl_integration_glfixed(const gsl_function * f, double a, double b, const 
+gsl_integration_glfixed_table * t)
+\end{verbatim}
+onde o retorno da função é o valor da integral no intervalo $[a,b]$ usando os pesos e abscissas salvos na tabela \verb|t|. A última função tem sintaxe
+\begin{verbatim}
+int gsl_integration_glfixed_point(double a, double b, size_t i, double * xi, double * wi, const 
+gsl_integration_glfixed_table * t)
+\end{verbatim}
+onde
+\begin{itemize}
+ \item \verb|i|, \verb|i=0,1,2,...n-1| é o índice que indica o i-ésimo ponto;
+ \item \verb|xi| é a i-ésima abscissa;
+ \item \verb|wi| é o i-ésima peso;
+ \item \verb|gsl_integration_glfixed_table * t| é a tabela com os pesos e abscissas.
+\end{itemize}
+
+
+\begin{ex}
+Calcule a integral
+$$
+\int_0^1 e^{-\lambda x^2}dx
+$$
+usando a quadratura de Gauss-Legendre.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+
+double f(double mu, void *params)
+{
+double r=*((double *) params);
+return exp(-r/mu)/mu;
+}
+
+void main()
+{
+  int N=200;
+  gsl_integration_glfixed_table * table;
+  table = gsl_integration_glfixed_table_alloc (N);
+  double result,params;
+
+  gsl_function F;
+  F.function=&f;
+  F.params=&params;
+
+  params=.5;
+  result=gsl_integration_glfixed(&F, 0, 1, table);
+  printf("O valor da integral é %f\n",result);
+
+  gsl_integration_glfixed_table_free(table);
+}
+\end{verbatim}
+
+Alternativamente, podemos salvar os pesos e abscissas em vetores integrar usando o somatório
+$$
+\sum_{i=0}^{n-1}w_if(x_i).
+$$
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+
+double f(double mu, void *params)
+{
+double r=*((double *) params);
+return exp(-r/mu)/mu;
+}
+
+void main()
+{
+  int N=200,flag;
+  gsl_integration_glfixed_table * table;
+  table = gsl_integration_glfixed_table_alloc (N);
+  double result=0,a[N],p[N],params=.5;
+  size_t i;
+  for (i=0; i<N;i++)
+  {
+    flag = gsl_integration_glfixed_point (0, 1, i, &a[i], &p[i], table);
+    printf("%zu %f %f\n", i, a[i], p[i]);
+  }
+  for (i=0; i<N;i++) result+=p[i]*f(a[i],&params);
+  printf("O valor da integral é %f\n",result);
+
+  gsl_integration_glfixed_table_free(table);
+}
+\end{verbatim}
+
+
+
+\section{Problema de transporte}
+\begin{ex}\label{transp_3}Resolva o problema dado pela equação estacionária do transporte unidimensional com espalhamento isotrópico:
+\begin{alignat*}{3}
+\mu\frac{\partial I}{\partial y}+\lambda I&=\frac{\sigma}{2}\int_{-1}^1 I(y,\mu)d\mu+Q(y,\mu), & &y\in (0,L),\ \mu\in[-1,1],\\
+I(0,\mu)&=B_0, & &\mu>0,\\
+I(L,\mu)&=B_L, &\quad &\mu<0.
+\end{alignat*}
+Nesse modelo, $I(y,\mu)$ é uma intensidade radiativa, 
+$$
+\mathcal{I}(y)=\frac{1}{2}\int_{-1}^1 I(y,\mu)d\mu
+$$
+é o fluxo escalar, $\lambda$ é o coeficiente de absorção, $\sigma$ é o coeficiente de espalhamento, $Q(y,\mu)$ é uma fonte, $B_0$ e $B_L$ são os fluxos de entrada na fronteira, $y\in[0,L]$ é a variável espacial e $\mu\in[-1,1]$ é o cosseno do ângulo entre o raio e o eixo $y$.
+\end{ex}
+Começamos discretizando à variável angular $\mu$ com um método chamado de Ordenadas Discretas. Escolhemos a quadratura numérica de Gauss-Legendre com um número par de abscissas $\mu_i$ e pesos $\omega_i$ e discretizamos a equação de forma a transformar a integral em um somatório. Este procedimento transforma o problema em um sistema de EDO's na variável $y$:
+\begin{alignat*}{3}
+\mu_i \frac{dI_i}{d y}+\lambda I_i&=\frac{\sigma}{2}\sum_{j=-M}^M\omega_jI_j(y)+Q_{ i}, & &y\in (0,L),\\
+I_i(0)&=B_0, & &\mu_i>0,\\
+I_i(L)&=B_L, &\quad &\mu_i<0,
+\end{alignat*}
+onde $i=-M,...,M$. Agora, separaramos o sistema de EDO's em dois: um para $\mu_i<0$ e outro para $\mu_i>0$. Portanto, 
+\begin{alignat*}{3}
+-\mu_i\frac{dI_{-i}}{d y}+\lambda I_{-i} &=\frac{\sigma}{2}\sum_{j=1}^{M}\omega_j(I_{-j}+I_{j})+Q_{- i}, &\quad &i=1,2,...,M,\\
+I_{-i}(L)&=B_L, &\quad &i=1,2,...,M,
+\end{alignat*}
+e
+\begin{alignat*}{3}
+\mu_i \frac{dI_{i}}{d y}+\lambda I_i &=\frac{\sigma}{2}\sum_{j=1}^{M}\omega_j(I_{-j}+I_{j})+Q_{ i}, &\quad &i=1,2,...,M,\\
+I_i(0)&=B_0, &\quad &i=1,2,...,M.
+\end{alignat*}
+Agora, vamos discretizar à variável espacial $y$. Dividimos o intervalo $[0,L]$ em $N$ subintervalos de tamanho $h=\frac{L}{N}$, e construímos a malha $y_k=(k-1)h$, $k=1,2,...,N+1$. Suponhamos que em um intervalo da malha $[y_k,y_{k+1}]$ o lado direito das equações seja constante e conhecido. Vamos denotar a aproximação para o lado direito da equação de $S_{i}^{k+1/2}$. Logo, neste intervalo temos:
+\begin{alignat*}{5}
+\frac{dI_{-i}}{d y} -\frac{\lambda}{\mu_i}I_{-i}&=-\frac{1}{\mu_i}S_{-i}^{k+1/2}, &\quad &i=1,2,...,M, &\quad &y_k \leq y \leq y_{k+1},\\
+\frac{dI_{i}}{d y} +\frac{\lambda}{\mu_i}I_{i}&=\frac{1}{\mu_i}S_{i}^{k+1/2}, & &i=1,2,...,M, & &y_k \leq y \leq y_{k+1}.
+\end{alignat*}
+As duas equações podem ser resolvidas pelo método do fator integrante:
+\begin{alignat*}{5}
+e^{-\frac{\lambda}{\mu_i }y_{k+1}} I_{-i}^{k+1}-e^{-\frac{\lambda}{\mu_i }y_k} I_{-i}^k &=\frac{S_{-i}^{k+1/2}}{\lambda}\left(e^{-\frac{\lambda}{\mu_i }y_{k+1}}-e^{-\frac{\lambda}{\mu_i }y_k}\right), &\quad &i=1,2,...,M, &\quad &k=1,2,...,N,\\
+e^{\frac{\lambda}{\mu_i }y_{k+1}} I_{i}^{k+1}-e^{\frac{\lambda}{\mu_i }y_k} I_{i}^k &=\frac{S_{i}^{k+1/2}}{\lambda}\left(e^{\frac{\lambda}{\mu_i }y_{k+1}}-e^{\frac{\lambda}{\mu_i }y_k}\right), & &i=1,2,...,M, & &k=1,2,...,N.
+\end{alignat*}
+As condições de contorno nos dão:
+\begin{alignat*}{3}
+I_{-i}^{N+1}&=  B_L, &\quad &i=1,2,...,M,\\
+I_i^1&= B_0, & &i=1,2,...,M.
+\end{alignat*}
+Logo, podemos obter $I_{-i}^{k}$ e $I_{i}^{k+1}$ de maneira recursiva, ou seja,
+\begin{alignat*}{5}
+I_{-i}^{k}&=e^{\frac{\lambda}{\mu_i }(y_k-y_{k+1})} I_{-i}^{k+1}+\frac{S_{-i}^{k+1/2}}{\lambda}\left(1-e^{\frac{\lambda}{\mu_i }(y_k-y_{k+1})}\right),&\quad &i=1,2,...,M, &\quad &k=N,N-1,...,1,\\
+I_{i}^{k+1}&=e^{\frac{\lambda}{\mu_i }(y_k-y_{k+1})} I_{i}^{k}+\frac{S_{i}^{k+1/2}}{\lambda}\left(1-e^{\frac{\lambda}{\mu_i }(y_k-y_{k+1})}\right), & &i=1,2,...,M, & &k=1,2,...,N.
+\end{alignat*}
+Damos um chute inicial para a solução e calculamos $S_{i}^{k+1/2}$ com as seguintes médias:
+\begin{alignat*}{1}
+S_{\pm i}^{k+1/2}&=\frac{1}{2}\left[\frac{\sigma}{2}\sum_{j=1}^{M}\omega_j(I_{-j}^{k}+I_{j}^{k})+Q_{\pm i}^{k}+\frac{\sigma}{2}\sum_{j=1}^{M}\omega_j(I_{-j}^{k+1}+I_{j}^{k+1})+Q_{\pm i}^{k+1}\right].\\
+\end{alignat*}
+A solução aproximada é obtida quando houver convergência do processo iterativo: Calculamos $S_{\pm i}^{k+1/2}=0$, depois $I_{-i}^{N+1}$, $I_{-i}^{N}$, $I_{-i}^{N-1}$, $\cdots$, $I_{-i}^{1}$ e $I_{i}^{1}$,$I_{i}^{2}$, $\cdots$, $I_{i}^{N+1}$. Depois recalculamos $S_{\pm i}^{k+1/2}$ e $I_{\pm i}^{k}$.
+
+Para implementar esse algoritmo, fazemos algumas considerações:
+\begin{itemize}
+ \item É necessário entender o algoritmo antes de começar a programar. Embora seja uma questão óbvia, a ansiedade pode nos trair.
+ \item É importante pensar na estrutura do código antes de programar: tipo das principais variáveis, formas de armazenamento (ponteiros, matrizes), variáveis globais, estruturas, funções, pacotes, etc.
+ \item Não é indicado programar tudo de uma só vez. Faça por pedaços e valide cada função independentemente. 
+ \item Compile o código seguidamente para não acumular erros de compilação.
+\end{itemize}
+
+Começamos implemetando uma função que calcula pesos e abscissas para a quadratura de Gauss-Legendre:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+#define M 10
+
+double *x,*w;
+
+double GL()
+{
+  size_t i,flag;
+  gsl_integration_glfixed_table * table;
+  table = gsl_integration_glfixed_table_alloc (M);
+  for (i=0; i<M;i++)
+  {
+    flag = gsl_integration_glfixed_point (-1, 1, i, &x[i], &w[i], table);
+    //printf("flag=%zu, %zu %f %f\n",flag, i, x[i], w[i]);
+  }
+  gsl_integration_glfixed_table_free(table);
+}
+double teste(double x)
+{ 
+  return x*x;
+}
+void main()
+{
+  int i; 
+  if (((x=malloc(sizeof(double)*M))==NULL)||((w=malloc(sizeof(double)*M))==NULL)) 
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+  GL(x,w);
+  double result=0;
+  for (i=0; i<M;i++) result+=w[i]*teste(x[i]);
+  printf("O valor da integral é %f\n",result);
+}
+\end{verbatim}
+Depois de testar essa rotina integrando várias funções, vamos um passo adiante. Definimos duas variáveis globais para salvar pesos e abscissas e alocamos espaço para salvar a solução numa variável tipo ponteiro para ponteiro.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+#define M 10
+#define N 10
+
+double *x,*w;
+
+double GL()
+{
+  size_t i,flag;
+  gsl_integration_glfixed_table * table;
+  table = gsl_integration_glfixed_table_alloc (2*M);
+  for (i=0; i<2*M;i++)
+  {
+    flag = gsl_integration_glfixed_point (-1, 1, i, &x[i], &w[i], table);
+    //printf("flag=%zu, %zu %f %f\n",flag, i, x[i], w[i]);
+  }
+  gsl_integration_glfixed_table_free(table);
+}
+
+void main()
+{
+  int i;
+  double **I; 
+  if (((x=malloc(sizeof(double)*2*M))==NULL)||((w=malloc(sizeof(double)*2*M))==NULL)) 
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+  if ((I = calloc(N+1,sizeof(double)))==NULL) 
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+  for (i=0;i<N+1;i++) if ((I[i] = calloc(2*M,sizeof(double)))==NULL)
+
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }  
+  GL(x,w);
+}
+\end{verbatim}
+Agora, implementamos a primeira versão do código que resolve o problema:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_integration.h>
+#define M 1000
+#define N 2000
+
+const double L=1;
+const double B0=1;
+const double BL=1;
+const double sigma=1;
+const double lambda=1.0;
+double *mu,*w,*y;
+
+double GL()
+{
+  size_t i,flag;
+  gsl_integration_glfixed_table * table;
+  table = gsl_integration_glfixed_table_alloc (2*M);
+  for (i=M; i<2*M;i++)
+  {
+    flag = gsl_integration_glfixed_point (-1, 1, i, &mu[i-M], &w[i-M], table);
+    //printf("flag=%zu, %zu %f %f\n",flag, i, mu[i], w[i]);
+  }
+  gsl_integration_glfixed_table_free(table);
+}
+double Q(double x)
+{
+ return exp(-x);
+}
+void main(void)
+{
+
+  int i,k,n;
+  double **I,*II; 
+  if (((mu=malloc(sizeof(double)*M))==NULL)||((w=malloc(sizeof(double)*M))==NULL)) 
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+  GL();
+  if ((y=malloc(sizeof(double)*(N+1)))==NULL)
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+  if ((II=malloc(sizeof(double)*(N+1)))==NULL)
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+  if ((I = calloc(N+1,sizeof(double)))==NULL) 
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+  for (i=0;i<N+1;i++) if ((I[i] = calloc(2*M,sizeof(double)))==NULL)
+  {
+  printf("Erro ao alocar memória");
+  return;
+  }
+//malha espacial
+  double h = L/N;
+  for (i=0;i<N+1;i++) y[i] = i*h;
+//Contorno
+  for (i=0;i<M;i++)
+  {
+    I[0][i] = B0;
+
+    I[N][M+i] =BL;
+  }
+  //iteracao
+  double Exp,S=0;
+  for (n=0;n<200;n++)
+  {
+    //Fluxo Escalar
+    for(k=0;k<N+1;k++)
+    {
+      II[k]=0;
+      for(i=0;i<M;i++)
+      {
+        II[k] += w[i]*(I[k][i]+I[k][M+i]);
+      }
+      if (k%200==0) printf("II(%d)=%f\n",k,II[k]);
+    }
+  
+    //Recorrência
+    for (i=0;i<M;i++)
+    {
+      for(k=0;k<N;k++)
+      {
+        S = 1/2.0*(sigma/2.0*(II[k]+II[k+1])+Q(y[k])+Q(y[k+1]));
+        Exp = exp(lambda/mu[i]*(y[k]-y[k+1]));
+
+        I[k+1][i] = S/lambda*(1-Exp)+I[k][i]*Exp;
+      }
+
+      for(k=N-1;k>-1;k--)
+      {
+        S = 1/2.0*(sigma/2.0*(II[k]+II[k+1])+Q(y[k])+Q(y[k+1]));
+        Exp = exp(lambda/mu[i]*(y[k]-y[k+1]));
+        I[k][M+i] = S/lambda*(1-Exp)+I[k+1][M+i]*Exp;
+
+      }
+
+    }
+  }
+}
+\end{verbatim}
+Para validar usamos resultados de artigos científicos, que fornecem dados tais como dessa tabela:
+\begin{table}[ht]
+\centering
+\caption{Valores calculados para $\int_{-1}^1I(y,\mu)d\mu$ quando $Q\left(y\right)=e^{-y}$, $\lambda'=\sigma'=1$ e $B_0=B_L=1$, com $L=1$.}{\vspace{0.1cm}}
+\label{tab1}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+y           & 0.0      & 0.2      & 0.4      & 0.6      & 0.8      & 1.0      \\ \hline
+$GFD_{800}$ & 3.514742 & 4.193467 & 4.307001 & 4.162773 & 3.820960 & 3.196349 \\ \hline
+DD \& Gauss-Legendre         & 3.514748 & 4.193470 & 4.307004 & 4.162776 & 3.820963 & 3.196353 \\ \hline
+DD \& Clenshaw-Curtis         & 3.514748 & 4.193471 & 4.307005 & 4.162777 & 3.820963 & 3.196354 \\ \hline
+\end{tabular}
+\end{table}
+
+Naturalmente, o código pode ser melhorado. Por exemplo, podemos estabelecer um critério de convergência para o processo iterativo.  
+
+\section{GSL - matrizes e vetores}
+
+Para utilizar os pacotes de algebra linear, é necessário armazenar os vetores e matrizes no formato gsl. Portanto, começamos introduzindo as funções do gsl para manipulação de vetores e matrizes que estão nos pacotes \verb|gsl_vector.h| e \verb|gsl_vector.h|, respectivamente.  
+\begin{itemize}
+ \item \verb|gsl_vector * gsl_vector_alloc(size_t n)| aloca um vetor de tamanho $n$ e retorna um ponteira para essa estrutura;
+ \item \verb|gsl_vector * gsl_vector_calloc(size_t n)| aloca um vetor de tamanho $n$ com todas posições nulas;
+\item \verb|void gsl_vector_free(gsl_vector * v) | libera espaço na memória;
+\item \verb|double gsl_vector_get(const gsl_vector * v, const size_t i)| retorna o valor de $v[i]$;
+ \item \verb|void gsl_vector_set(gsl_vector * v, const size_t i, double x)| atribui $v[i]=x$;
+ \item \verb|void gsl_vector_set_all(gsl_vector * v, double x)|  atribui $v[i]=x\ \forall i$;
+ \item \verb|void gsl_vector_set_zero(gsl_vector * v)|  atribui $v[i]=0\ \forall i$.
+ \item \verb|int gsl_vector_memcpy(gsl_vector * dest, const gsl_vector * src)| copia o o vetor \verb|src| para o vetor \verb|dest|;
+ \item \verb|gsl_vector_add(gsl_vector * a, const gsl_vector * b)| $a_i\leftarrow a_i+b_i\ \forall i$;
+ \item \verb|gsl_vector_sub(gsl_vector * a, const gsl_vector * b)| $a_i\leftarrow a_i-b_i\ \forall i$;
+ \item \verb|gsl_vector_div(gsl_vector * a, const gsl_vector * b)| $a_i\leftarrow a_i/b_i\ \forall i$;
+ \item \verb|gsl_vector_mul(gsl_vector * a, const gsl_vector * b)| $a_i\leftarrow a_i*b_i\ \forall i$;
+ \item \verb|double gsl_vector_max(const gsl_vector * v)| retorna o máximo de $v$.
+ \item \verb|gsl_matrix * gsl_matrix_alloc(size_t n1, size_t n2)| aloca matriz $n1\times n2$;
+ \item \verb|gsl_matrix * gsl_matrix_calloc(size_t n1, size_t n2)| aloca matriz $n1\times n2$ e atribui zero para todas as posições;
+ \item \verb|void gsl_matrix_free(gsl_matrix * m)| libera memoria;
+ \item \verb|double gsl_matrix_get(const gsl_matrix * m, const size_t i, const size_t j)| retorna $m[i,j]$;
+ \item \verb|void gsl_matrix_set(gsl_matrix * m, const size_t i, const size_t j, double x)| atribui $m[i,j]=x$;
+ \item $\vdots$
+ \end{itemize}
+A lista acima mostra apenas algumas funções das dezenas que existem. As demais podem ser acessadas na documentação do gsl https://www.gnu.org/software/gsl/doc/html/vectors.html.
+
+\begin{ex}Vamos definir dois vetores e duas matrizes e fazer algumas operações.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+
+void main(void)
+{
+  int i,j;
+  gsl_vector *v,*w;
+  gsl_matrix *A,*B;
+  v=gsl_vector_alloc(3);
+  w=gsl_vector_calloc(3);
+  A=gsl_matrix_alloc(3,3);
+  B=gsl_matrix_calloc(3,3);
+  gsl_vector_set_zero(v);
+  for (i=0;i<3;i++) printf("v[%d]=%f\n",i,gsl_vector_get(v,i));
+  printf("\n");
+  for (i=0;i<3;i++) printf("v[%d]=%f\n",i,gsl_vector_get(v,i));
+  printf("\n");
+  for (i=0;i<3;i++) for (j=0;j<3;j++) gsl_matrix_set(A, i,j, i*j);
+  for (i=0;i<3;i++) for (j=0;j<3;j++) gsl_matrix_set(B, i,j, exp(-i*j));
+  for (i=0;i<3;i++) 
+  {
+    for (j=0;j<3;j++) 
+    {
+      printf("A[%d,%d]=%f  ",i,j,gsl_matrix_get(A,i,j));
+    }
+    printf("\n");
+  }
+  printf("\n");
+  for (i=0;i<3;i++) 
+  {
+    for (j=0;j<3;j++) 
+    {
+      printf("B[%d,%d]=%f  ",i,j,gsl_matrix_get(B,i,j));
+    }
+    printf("\n");
+  }
+  gsl_matrix_add(A, B);
+  for (i=0;i<3;i++) 
+  {
+    for (j=0;j<3;j++) 
+    {
+      printf("A[%d,%d] + B[%d,%d]=%f  ",i,j,i,j,gsl_matrix_get(A,i,j));
+    }
+    printf("\n");
+  }
+}
+\end{verbatim}
+
+
+\begin{ex}Vamos voltar ao exemplo \ref{ex_Jacobi} e resolver o sistema linear
+ \begin{eqnarray*}
+3x+y+z&=&1\\
+-x-4y+2z&=&2\\
+-2x+2y+5z&=&3
+\end{eqnarray*}
+usando o método de Jacobi. No entanto, vamos utilizar a estrura de vetores do gsl.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_vector.h>
+
+double norma_dif_2(gsl_vector *x,gsl_vector *y)
+{
+  int i;
+  gsl_vector_sub(x, y);
+  double norma2=0;
+  for (i=0;i<3;i++) norma2+=(gsl_vector_get(x,i))*(gsl_vector_get(x,i)); 
+  return sqrt(norma2);	
+}
+void Iteracao(gsl_vector *x_antigo,gsl_vector *x_atual)
+{
+  gsl_vector_set(x_atual,0,(1-gsl_vector_get(x_antigo,1)-gsl_vector_get(x_antigo,2))/3.);
+  gsl_vector_set(x_atual,1,(-2-gsl_vector_get(x_antigo,0)+2*gsl_vector_get(x_antigo,2))/4.);
+  gsl_vector_set(x_atual,2,(3+2*gsl_vector_get(x_antigo,0)-2*gsl_vector_get(x_antigo,1))/5.);
+}
+
+void Jacobi(double tolerancia,gsl_vector *x_atual)
+{
+  gsl_vector *x_antigo=gsl_vector_alloc(3);
+  int i,controle=3;
+  //chute inicial
+  gsl_vector_set_zero(x_antigo);
+//iteração
+  while (controle)
+  {
+    Iteracao(x_antigo,x_atual);
+    if (norma_dif_2(x_antigo,x_atual)<tolerancia) controle--;
+    else controle=3;
+    gsl_vector_memcpy(x_antigo,x_atual);
+    printf("x=%f, y=%f, z=%f\n",gsl_vector_get(x_atual,0),gsl_vector_get(x_atual,1),gsl_vector_get(x_atual,2));	
+  }
+  gsl_vector_free(x_antigo);
+  return;
+}
+main (void)
+{
+  int i;
+  gsl_vector *solucao;
+  solucao = gsl_vector_alloc(3);
+  double tolerancia=1e-3;
+  Jacobi(tolerancia,solucao);
+  for (i=0;i<3;i++)     printf("x[%d] = %f\n",i,gsl_vector_get(solucao,i));
+  gsl_vector_free(solucao);
+}
+\end{verbatim}
+
+
+
+
+
+\section{GSL - álgebra linear}
+O gsl resolve problemas em álgebra linear por diversos métodos. Aqui nós vamos trabalhar apenas com a decomposição QR e sistemas tridiagonais. O pacote para álgebra linear é \verb|gsl_linalg.h|.
+
+\begin{itemize}
+\item \verb|int gsl_linalg_QR_decomp(gsl_matrix * A, gsl_vector * tau)|: calcula a decomposição QR da matriz A.
+ \item \verb|int gsl_linalg_QR_solve(const gsl_matrix * QR, const gsl_vector * tau, const gsl_vector * b, gsl_vector * x)|: resolve o  $A x = b$ usando a decomposição QR.
+\end{itemize}
+\begin{ex}Implemente um código para resolver o sistema
+\begin{eqnarray*}
+3x+y+z&=&1\\
+-x-4y+2z&=&2\\
+-2x+2y+5z&=&3
+\end{eqnarray*} 
+usando decomposição QR da biblioteca gsl.
+\end{ex}
+
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_linalg.h>
+
+main (void)
+{
+  gsl_vector *tau=gsl_vector_alloc(3);
+  gsl_vector *b=gsl_vector_alloc(3);
+  gsl_vector *x=gsl_vector_alloc(3);
+  gsl_matrix *A=gsl_matrix_alloc(3,3);;
+  gsl_matrix_set(A,0,0,3);
+  gsl_matrix_set(A,0,1,1);
+  gsl_matrix_set(A,0,2,1);
+  gsl_matrix_set(A,1,0,-1);
+  gsl_matrix_set(A,1,1,-4);
+  gsl_matrix_set(A,1,2,2);
+  gsl_matrix_set(A,2,0,-2);
+  gsl_matrix_set(A,2,1,2);
+  gsl_matrix_set(A,2,2,5);
+  gsl_vector_set(b,0,1);
+  gsl_vector_set(b,1,2);
+  gsl_vector_set(b,2,3);
+  int i,j;
+  for (i=0;i<3;i++)
+  {
+    for (j=0;j<3;j++) printf("A[%d,%d] = %f ",i,j,gsl_matrix_get(A,i,j));
+  printf("\n");
+  }
+  for (i=0;i<3;i++) printf("b[%d] = %f\n",i,gsl_vector_get(b,i));
+  gsl_linalg_QR_decomp(A, tau);
+  gsl_linalg_QR_solve(A, tau,b,x);
+  for (i=0;i<3;i++) printf("solucao[%d] = %f\n",i,gsl_vector_get(x,i));
+}
+\end{verbatim}
+
+O comando
+\begin{itemize}
+ \item \verb|int gsl_linalg_QR_lssolve(const gsl_matrix * QR, const gsl_vector * tau, const gsl_vector * b, gsl_vector * x, gsl_vector * residual)| resolve sistema impossível (quando possui mais linhas independes que colunas) pelo critério de mínimos quadrados.
+\end{itemize}
+
+\begin{ex}
+Implemente um código para calcular os coeficientes de uma reta que melhor se ajusta aos pontos: $(0,1)$,$(1,0.5)$, $(2,-0.2)$, $(3,-0.7)$.   
+\end{ex}
+Supondo que a reta tenha equação $y=ax+b$, temos
+\begin{eqnarray}
+ b&=&1\\
+ a+b&=&0.5\\
+ 2a+b&=&-0.2\\
+ 3a+b&=&-0.7
+\end{eqnarray}
+um sistema que pode ser resolvido pelo critério dos mínimos quadrados. Na forma matricial, temos
+$$
+\left[\begin{array}{cc}
+0&1\\
+1&1\\
+2&1\\
+3&1\\
+\end{array}\right]\left[\begin{array}{c}a\\b\end{array}\right]=
+\left[\begin{array}{c}1\\0.5\\-0.2\\ -0.7\end{array}\right].
+$$
+Vamos resolver usando a decomposição QR.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_linalg.h>
+
+main (void)
+{
+  gsl_vector *tau=gsl_vector_alloc(2);
+  gsl_vector *b=gsl_vector_alloc(4);
+  gsl_vector *x=gsl_vector_alloc(2);
+  gsl_vector *residual=gsl_vector_alloc(4);
+  gsl_matrix *A=gsl_matrix_alloc(4,2);;
+  gsl_matrix_set(A,0,0,0);
+  gsl_matrix_set(A,0,1,1);
+  gsl_matrix_set(A,1,0,1);
+  gsl_matrix_set(A,1,1,1);
+  gsl_matrix_set(A,2,0,2);
+  gsl_matrix_set(A,2,1,1);
+  gsl_matrix_set(A,3,0,3);
+  gsl_matrix_set(A,3,1,1);
+  gsl_vector_set(b,0,1);
+  gsl_vector_set(b,1,0.5);
+  gsl_vector_set(b,2,-0.2);
+  gsl_vector_set(b,3,-0.7);
+
+  int i,j;
+  for (i=0;i<4;i++)
+  {
+    for (j=0;j<2;j++) printf("A[%d,%d] = %f ",i,j,gsl_matrix_get(A,i,j));
+  printf("\n");
+  }
+  for (i=0;i<4;i++) printf("b[%d] = %f\n",i,gsl_vector_get(b,i));
+  gsl_linalg_QR_decomp(A, tau);
+  gsl_linalg_QR_lssolve(A, tau,b,x,residual);
+  for (i=0;i<2;i++) printf("solucao[%d] = %f\n",i,gsl_vector_get(x,i));
+  for (i=0;i<4;i++) printf("residuo[%d] = %f\n",i,gsl_vector_get(residual,i));
+}
+\end{verbatim}
+
+A função
+\begin{itemize}
+ \item \verb|int gsl_linalg_solve_tridiag(const gsl_vector * diag, const gsl_vector * e, const gsl_vector * f, const gsl_vector * b, gsl_vector * x)| resolve o sistema tridiagonal
+$$
+\left[\begin{array}{cccccc}
+d_0&e_0 & 0 &0&\cdots &0\\
+f_0&d_1&e_1 & 0 &\cdots &0\\
+0&f_1&d_2 & e_2 &\cdots &0\\
+\vdots && & \vdots &\ddots& \\
+0&\cdots&0 & f_{n-2} &d_{n-1} &e_{n-1}\\
+0&\cdots&0 & 0 &f_{n-1} &d_n
+\end{array}\right]\left[\begin{array}{c}x_1\\x_2\\x_3\\ \vdots \\x_{n-1}\\x_n\end{array}\right]=
+\left[\begin{array}{c}b_1\\b_2\\b_3\\ \vdots \\ b_{n-1}\\b_n\end{array}\right].
+$$
+\end{itemize}
+
+\begin{ex} Vamos resolver novamente o problema do exemplo \ref{ex_PVC_TDMA} usando a rotina gsl para sistemas tridiagonais.
+\end{ex}
+O PVC do problema
+$$\left\{\begin{array}{l}-u_{xx}+u_x=200e^{-(x-1)^2},~~ 0<x<1.\\
+15u(0)+u'(0)=500\\
+10u(1)+u'(1)=1\end{array}
+\right.
+$$
+possui a seguinte versão discreta
+\begin{equation*}
+ \left[\begin{array}{ccccccc}
+        15-\frac{1}{h}&\frac{1}{h}&0&0&0&\cdots&0\\
+        -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}&-\frac{1}{h^2}+\frac{1}{2h}&0&0&\cdots&0\\
+              0&  -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}&-\frac{1}{h^2}+\frac{1}{2h}&0&\cdots&0\\
+              \vdots&\vdots&\vdots&\vdots&\ddots&&\vdots\\
+              0&\cdots&0&0& -\frac{1}{h^2}-\frac{1}{2h}&\frac{2}{h^2}&-\frac{1}{h^2}+\frac{1}{2h}\\
+              0&\cdots&0&0&0& -\frac{1}{h}&10+\frac{1}{h}
+       \end{array}
+\right]\left[\begin{array}{c}
+             u_1\\u_2\\u_3 \\ \vdots\\ u_{N-1}\\u_N 
+             \end{array}
+\right]=\left[\begin{array}{c}
+             500\\200e^{-(x_2-1)^2}\\200e^{-(x_3-1)^2} \\ \vdots\\ 200e^{-(x_{N-1}-1)^2}\\1 
+             \end{array}
+\right]
+\end{equation*}
+onde $x_i=h(i-1)$, $i=1,2,...,N$, $h=\frac{1}{N-1}$.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_linalg.h>
+#define N 10
+
+main (void)
+{
+  gsl_vector *d=gsl_vector_alloc(N);
+  gsl_vector *f=gsl_vector_alloc(N-1);
+  gsl_vector *e=gsl_vector_alloc(N-1);
+  gsl_vector *sol=gsl_vector_alloc(N);
+  gsl_vector *b=gsl_vector_alloc(N);
+  double h=1./(N-1);
+  int i,j;
+  //malha
+  gsl_vector *x=gsl_vector_alloc(N);
+  for (i=0;i<N;i++) gsl_vector_set(x,i,i*h);  
+  for (i=0;i<N;i++) printf("x[%d] = %f\n",i,gsl_vector_get(x,i));
+  
+  //sistema
+  gsl_vector_set(d,0,15-1/h);
+  gsl_vector_set(e,0,1/h);
+  gsl_vector_set(b,0,500);
+  for (i=1;i<N-1;i++) 
+  {
+    gsl_vector_set(d,i,2/(h*h));
+    gsl_vector_set(e,i,-1/(h*h)+1/(2*h));
+    gsl_vector_set(f,i-1,-1/(h*h)-1/(2*h));
+    gsl_vector_set(b,0,200*exp(-(gsl_vector_get(x,i)-1)*(gsl_vector_get(x,i)-1)));
+  }
+  gsl_vector_set(d,N-1,10+1/h);
+  gsl_vector_set(f,N-2,-1/h);
+  gsl_linalg_solve_tridiag(d,e,f,b,sol);
+  for (i=0;i<N;i++) printf("solucao[%d] = %f\n",i,gsl_vector_get(sol,i));
+}
+\end{verbatim}
+
+\section{Exercícios}
+\begin{exer}
+ Implemente um código para resolver o problema do exemplo \ref{ex:int_dup} usando as rotinas do gsl.
+\end{exer}
+\begin{exer}
+ Implemente um código para resolver o problema do exercício \ref{exerc:transp_int} usando as rotinas do gsl.
+\end{exer}
+
+
+\begin{exer}
+Resolva o problema dado pela equação estacionária do transporte unidimensional com espalhamento isotrópico e condições de contorno semi-reflectivas:
+\begin{alignat*}{3}
+\mu\frac{\partial I}{\partial y}+\lambda I&=\frac{\sigma}{2}\int_{-1}^1 I(y,\mu)d\mu+Q(y,\mu), & &y\in (0,L),\ \mu\in[-1,1],\\
+I(0,\mu)&=\rho_0(\mu)I(0,-\mu)+ (1-\rho_0(\mu))B_0(\mu), & &\mu>0,\\
+I(L,\mu)&=\rho_L(\mu)I(L,-\mu)+ (1-\rho_L(\mu))B_L(\mu), &\quad &\mu<0.
+\end{alignat*}
+Aqui, $\rho_0$ e $\rho_L$ são índices de reflexão. Use as quadraturas de Boole e Gauss-Legendre.
+
+Dica: Use a mesma discretização do exemplo \ref{transp_3} adicionado a discretização
+\begin{alignat*}{5}
+I_{-i}^{N+1}&=\rho_{L_{-i}} I_{i}^{N+1}+(1-\rho_{L_{-i}}) B_L, &\quad &i=1,2,...,M,\\
+I_i^1&=\rho_{0{_i}}I_{-i}^1+(1-\rho_{0{_i}}) B_0, & &i=1,2,...,M.
+\end{alignat*}
+na fonteira.
+
+\end{exer}
+
+
+\begin{exer}
+Refaça os exercícios \ref{GS_exerc} e \ref{TDMA0} usando as estruturas do gsl para vetores.
+\end{exer}
+
+\begin{exer}Resolva o problema do exercício \ref{sis_nao_linear} usando o método de Newton e as rotinas da bilbioteca gsl.
+\end{exer}
+\begin{exer}
+Resolva o problema do exercício \ref{exerc_14.1} usando o método de diferenças finitas, o método de Newton e as rotinas da bilbioteca gsl.
+\end{exer}
+\begin{exer}
+Resolva numericamente o problema dado pela equação do calor evolutiva
+\begin{eqnarray*}
+\frac{\partial u}{\partial t}&=&\mu\frac{\partial^2 u}{\partial x^2},\qquad 0<x<1,\ t>0\\
+u(x,0)&=&10e^{-x}\\
+u(0,t)&=&1\\
+u(1,t)&=&2
+\end{eqnarray*}
+Dica: Use o método de Crank-Nicolson para a discretização temporal:
+\begin{eqnarray*}
+\frac{u^{k+1}_i-u^{k}_i}{h_t}&=&\mu\frac{u^{k+1}_{i+1}-2u^{k+1}_i+u^{k+1}_{i-1}}{2h_x^2}+\mu\frac{u^{k}_{i+1}-2u^{k}_i+u^{k}_{i-1}}{2h_x^2}\\
+u_i^0&=&10e^{-x_i}\\
+u_0^{k}&=&1\\
+u_N^{k}&=&2,
+\end{eqnarray*}
+onde
+\begin{itemize}
+ \item $u^k_i\approx u(x_i,t_k)$ é uma aproximação para a solução no tempo $t_k$ e ponto $x_i$.
+ \item $x_i$ é uma malha espacial.
+ \item $h_t$ é incremento temporal.
+ \item $h_x$ é o espaçamento da malha espacial.
+\end{itemize}
+Observe que teremos que resolver um sistema linear a cada passo de tempo:
+\begin{eqnarray*}
+-\frac{\mu h_t}{2h_x^2}u^{k+1}_{i+1}+\left(1+\frac{\mu h_t}{h_x^2}\right)u^{k+1}_i-\frac{\mu h_t}{2h_x^2}u^{k+1}_{i-1}&=&u^{k}_i+\frac{\mu h_t}{2h_x^2}\left(u^{k}_{i+1}-2u^{k}_i+u^{k}_{i-1}\right)\\
+u_i^0&=&10e^{-x_i}\\
+u_0^{k}&=&1\\
+u_N^{k}&=&2,
+\end{eqnarray*}
+\end{exer}

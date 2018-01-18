@@ -1,0 +1,322 @@
+\chapter{Testes, condições e laços}
+\section{if-else}
+O \verb|if-else| permite escolher em quais circunstância se deve executar uma instrução. Sua sintaxe é: 
+\begin{verbatim}
+ if (condição)
+ instrução 1
+ else
+ instrução 2
+\end{verbatim}
+\begin{ex}\label{ex5}Escreva um programa que lê dois números e imprime qual é o maior
+ 
+\end{ex}
+
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  float x,y;
+  printf("Entre com o valor de x\n");
+  scanf("%f", &x);
+  printf("Entre com o valor de y\n");
+  scanf("%f", &y);
+  if (x>=y)
+    printf("x é maior ou igual a y\n");
+  else
+    printf("x menor que y\n");
+}
+\end{verbatim}
+\begin{ex}\label{ex6}Escreva um programa que lê dois números inteiros e apresente-os em ordem decrescente.
+\end{ex}
+\begin{verbatim}
+ #include <stdio.h>
+
+main()
+{
+  int x,y,aux;
+  printf("Entre com o valor de x\n");
+  scanf("%d", &x);
+  printf("Entre com o valor de y\n");
+  scanf("%d", &y);
+  if (x<y)
+    {
+      aux=x;
+      x=y;
+      y=aux;
+    }
+
+  printf("%d  %d\n",x,y);
+}
+\end{verbatim}
+Observe que é importante a identação do bloco de instrução internos ao if para maior legibilidade do código.
+
+\section{Operadores Lógicos}
+Interliga duas condições e funcionam da mesma forma que os operadores lógicos aritméticos. Por exemplo, no caso de $a<x<b$, fazemos \verb|x>a && x<b|, onde \verb|&&| é o operador lógico {\bf e}. O operador lógico {\bf ou} é o \verb!||! e o operador lógico {\bf não} é o \verb|!|.
+\begin{ex}\label{ex7} Escreva um programa que leia um número real e responda se ele está entre 0 e 1 ou entre 3 e 5.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  float x;
+  printf("Entre com o valor de x\n");
+  scanf("%f", &x);
+  if ((x>=0 && x<=1)||(x>=3 && x<=5))
+    printf("o número está ou entre 0 e 1 ou entre 3 e 5\n");
+  else
+    printf("o número não está entre 0 e 1 e não está entre 3 e 5\n");
+}
+\end{verbatim}
+
+\section{switch}
+O \verb|switch| é uma alternativa ao \verb|if-else| quando o número de possibilidades é grande. Sua sintaxe é 
+\begin{verbatim}
+ switch (expressão)
+ case valor 1: instrução 1;
+ case valor 2: instrução 2;
+ case valor 3: instrução 3;
+\end{verbatim}
+\begin{ex}\label{ex8}Escreva um programa que lê um caractere e imprime solteiro para S ou s, casado para C ou c, etc.
+\end{ex}
+\begin{verbatim}
+ #include <stdio.h>
+
+main()
+{
+  char estado_civil;
+  printf("Entre com seu estado civil\n");
+  scanf("%c", &estado_civil);
+  switch (estado_civil)
+    {
+    case 's':
+    case 'S': printf("solteiro(a)\n"); break;
+    case 'C': 
+    case 'c': printf("casado(a)\n"); break;
+    case 'V': 
+    case 'v': printf("viúvo(a)\n");break;
+    case 'D': 
+    case 'd': printf("divorciado\n");break;
+    default: printf("não informou/outro\n"); break;
+    }
+}
+\end{verbatim}
+
+
+\section{While}
+O \verb|while| permite fazer um loop enquanto uma expressão for verdadeira (ou diferente de zero). Sua sintaxe é: 
+\begin{verbatim}
+ while (expressão)
+ instrução 
+\end{verbatim}
+Essa estrutura só faz sentido se a expressão é recalculada a cada iteração e para quando chegar no valor zero. Vamos estudar o exemplo abaixo.
+\begin{ex}\label{ex9}
+ Escreva um código que imprime os números entre 0 e 10.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  int i=0;
+  while (i<=10)
+  {
+    printf("i=%d\n",i);
+    i=i+1;
+  }
+} 
+\end{verbatim}
+Vamos discutir o código do exemplo \ref{ex9}. A primeira instrução é uma atribuição de valor $0$ para o inteiro \verb|i|. O \verb|while| testa a expressão \verb|(i<=10)|: $0$ é menor ou igual a $10$? Como o teste tem resposta $1$ (VERDADE), o programa executa as instruções dentro do bloco \verb|while|. A primeira instrução imprime o número $0$ e a segunda atribui para \verb|i| o valor de \verb|i+1|, ou seja, agora \verb|i| tem valor $0+1=1$. O \verb|while| repete a pergunta: $1$ é menor ou igual a $10$? A resposto é verdadeira, então o programa imprime o número $1$ e incrementa \verb|i| para $2$. Quando o valor de \verb|i| chegar em $11$, o \verb|while| faz a pergunta: $11$ é menor ou igual a $10$? A resposta é $0$ (FALSO) e o programa encerra o loop.
+
+No contexto de loops, um operador importante para incrementar o valor de uma variável é o operador incremento \verb|++|. Observe uma possibilidade de programa para o exemplo \ref{ex9}:
+\begin{verbatim}
+ #include <stdio.h>
+
+main()
+{
+  int i=0;
+  while (i<=10)
+    {
+    printf("i=%d\n",i);
+    i++;
+  }
+}
+\end{verbatim}
+O operador \verb|++i| pode ser usado antes da variável (pré-fixado) ou depois \verb|i++| (pós-fixado), sedo que em ambos os casos a variável é incrementada em uma unidade. No entanto, quando o valor da variável é usado numa expressão, o efeito é diferente: \verb|i++| primeiro usa o valor antigo depois incrementa e; \verb|++i| primeiro incrementa e depois usa o valor atualizado. Observe os dois programas abaixo:
+
+Programa 1:
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  int x,i=0;
+  while (i<=10)
+  {
+    printf("i=%d\n",++i);
+  }
+}
+\end{verbatim}
+
+Programa 2:
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  int x,i=0;
+  while (i<=10)
+  {
+    printf("i=%d\n",i++);
+  }
+}
+\end{verbatim}
+
+O programa 1 imprime os número entre 1 e 11 e o programa 2 imprime os números entre 0 e 10. O operador análogo que diminui em uma unidade o valor da variável é o operador decremento \verb|--|.
+
+Observe que o \verb|while| primeiro testa, depois executa. Para inverter essa sequência, usamos o \verb|do-while|. Sua sintaxe é: 
+\begin{verbatim}
+ do
+ instrução 
+ while (expressão)
+\end{verbatim}
+Uma versão para o programa do exemplo \ref{ex9} é:
+\begin{verbatim}
+ #include <stdio.h>
+
+main()
+{
+  int i=0;
+  do
+  {
+    printf("i=%d\n",i++);	  
+  }
+  while (i<=10);
+}
+\end{verbatim}
+
+\begin{ex}\label{ex10}Escreva um programa que some os primeiros termos da série
+$$
+\sum_{i=0}^\infty \frac{1}{2^i} .
+$$
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+main()
+{
+  double enesimo=1,soma=0,epsilon=1e-10;
+  int controle=3;
+  soma=enesimo;
+  while (controle)
+  {
+    enesimo*=1.0/2.0;
+    soma+=enesimo;
+    if (enesimo<epsilon) controle--;
+    printf("controle=%d, enesimo=%e, soma=%f\n",controle,enesimo,soma);
+  }
+}
+\end{verbatim}
+No exemplo \ref{ex10} \verb|enesimo*=1.0/2.0| tem a mesma funcionalidade de \verb|enesimo=enesimo*1.0/2.0| assim como \verb|soma+=enesimo| funciona como \verb|soma=soma+enesimo|. 
+
+\section{For}
+A \verb|for| também é usado para construir loops. Sua sintaxe é
+\begin{verbatim}
+ for (expressão 1;expressão 2; expressão 3)
+ instrução 
+\end{verbatim}
+onde \verb|expressão 1| configura o início do loop, \verb|expressão 2| o fim e \verb|expressão 3| o incremento. Vamos estudar um exemplo.
+\begin{ex}\label{ex11}Reescreva o código do exemplo \ref{ex9} usando \verb|for|.
+\end{ex}
+\begin{verbatim}
+ #include <stdio.h>
+
+main()
+{
+  int i;
+  for (i=0;i<=10;i++)
+  {
+    printf("i=%d\n",i);
+  }
+}
+\end{verbatim}
+Observe no código do exemplo \ref{ex10} o uso do \verb|for (i=0;i<=10;i++)|. Aqui, \verb|i| recebe $0$ no início do loop com a expressão \verb|i=0|, o laço de repetição segue enquanto a expressão \verb|i<=10| for verdadeira e é incrementada em uma unidade a cada iteração pela expressão \verb|i++|.
+\begin{ex}\label{ex12}Some os 20 primeiros termos da série
+$$
+\sum_{i=1}^\infty \frac{1}{i^2}
+$$
+\end{ex}
+\begin{verbatim}
+ #include <stdio.h>
+
+main()
+{
+  double enesimo,soma=0;
+  int i;
+  for (i=1;i<=100;i++)
+  {
+    enesimo=1.0/(i*i);
+    soma+=enesimo;
+    printf("i=%d, enesimo=%e, soma=%f\n",i,enesimo,soma);
+  }
+}
+\end{verbatim}
+
+
+\section{Exercícios}
+\begin{exer}Implemente um programa que indique se o inteiro lido é zero ou não.
+\end{exer}
+\begin{exer}Implemente um programa que retorna quantos segundos tem $x$ horas.
+\end{exer}
+\begin{exer}Implemente um programa que retorna quantos segundos tem $x$ horas. Cuide que enviar uma mensagem de erro se $x$ for negativo.
+\end{exer}
+\begin{exer}\label{exerc3.1}Escreva um programa para testar se um ano é bissexto ou não.
+\end{exer}
+\begin{exer}\label{exerc3.2}Escreva um programa que verifique quantos dias tem um dado mês (exemplo, janeiro tem 31 dias).
+\end{exer}
+\begin{exer}\label{exerc3.3}Escreva um programa que leia uma data e verifique se ela é válida ou não.
+\end{exer}
+\begin{exer}Escreva um programa que imprime os números entre 0 e 20 em ordem decrescente. Faça versões que incluam \verb|for|, \verb|while| e \verb|--|. 
+\end{exer}
+\begin{exer} Reescreva o código do exemplo \ref{ex12} e calcule a soma até que $n$-ésimo termo ficar menor que $10^{-10}$.
+\end{exer}
+\begin{exer} Estude o comportamento dessas duas sequências:
+$$\left\{
+\begin{array}{l}\displaystyle
+ x_0=\frac{1}{3}\\\\ \displaystyle
+ x_{n}=\frac{x_{n-1}+1}{4},\qquad n=1,2,...
+\end{array}\right.
+$$
+e
+$$\left\{
+\begin{array}{l}\displaystyle
+ x_0=\frac{1}{3}\\\\ \displaystyle
+ x_{n}=4x_{n-1}-1,\qquad n=1,2,...
+\end{array}\right.
+$$
+Verfique que ambas as sequências são constantes: $\frac{1}{3}$, $\frac{1}{3}$, $\frac{1}{3}$, $\frac{1}{3}$, $...$. Depois implemente um código e estude o comportamento numérico dessas sequências. Para entender melhor o fenômeno numérico, leia o capítulo 2 do livro \url{https://www.ufrgs.br/numerico/}, especialmente a seção intitulada ``mais exemplos de cancelamento catastrófico''.
+\end{exer}\label{exerc4.1}
+\begin{exer}
+A sequência
+$$\left\{
+\begin{array}{l}\displaystyle
+ x_0=a,\qquad a>0\\\\ \displaystyle
+ x_{n}=\frac{1}{2}\left(x_{n-1}+\frac{b}{x_{n-1}}\right),\qquad b>0\ \hbox{e}\ n=1,2,...
+\end{array}\right.
+$$
+converge para $\sqrt{b}$. Implemente um código para calcular $\sqrt{2}$ e use como critério de parada a expressão:
+$$
+\frac{|x_n-x_{n-1}|}{|x_n|}<10^{-10}.
+$$
+\end{exer}
+\begin{exer}\label{exerc4.2}
+Conclua que a função  $f(x)=x-\cos(x)$ tem uma única raíz real. A sequência
+$$\left\{
+\begin{array}{l}\displaystyle
+ x_0=a, \\\\ \displaystyle
+ x_{n}=\cos(x_{n-1}),\qquad\ n=1,2,...
+\end{array}\right.
+$$
+converge para a raíz da função $f$. Implemente um código para calcular a raíz da função $f$ com 8 dígitos significativos corretos. Use diferentes valores de $a$.
+\end{exer}

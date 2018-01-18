@@ -1,0 +1,349 @@
+
+
+\chapter{Aula 21}
+\section{Memória Dinâmica}
+O objetivo é definir um ponteiro no início do programa e alocar/liberar memória durante a execução. Até agora, nossos programas alocavam memória no momento que definíamos as variáveis. Por exemplo, \verb| double x[N];| define uma variável do tipo \verb|double|, como o nome \verb|x| e aloca $8*N$ bytes para armazená-la. Suponha que nós não sabemos de antemão quantos bytes serão necessários, pois o número de bytes será calculado na primeira parte do código? Nesse caso, usamos as funções da biblioteca \verb|<stdlib.h>| para alocar/liberar memória durante a execução do programa. As funções
+\begin{verbatim}
+void *malloc(size_t numero_de_bytes)
+\end{verbatim}
+e
+\begin{verbatim}
+void *calloc(size_t numero_de_elementos, size_t tamanho_de_cada_elementos)
+\end{verbatim}
+permitem alocar memória dinamicamente. Aqui, \verb|size_t| é o tipo \verb|unsigned int| definido dentro da biblioteca \verb|<stdlib.h>|, \verb|numero_de_bytes| é o número de bytes, \verb|numero_de_elementos| é o número de elementos e \verb|tamanho_de_cada_elementos| é o tamanho de cada elementos em bytes. Ambas funções retornam um ponteiro para a posição de memória onde está sendo alocado ou \verb|NULL| no caso de falha de alocamento. A diferença básica é que a segunda função já coloca um carga inicial nula, enquanto a primeira não atribui valor algum. A função \verb|void free(void *p)| entra o ponteiro e libera a memória alocada.
+\begin{ex}
+Faça um programa que armazena os $N$ primeiros números da sequência de Fibonacci. Leia $N$ com a função \verb|scanf|.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+void main(void)
+{
+  int N,i;
+  int *FIB;
+  printf("Entre com o número de termos\n");
+  scanf("%d",&N);
+  FIB=malloc(N*sizeof(int));
+  if (FIB==NULL) printf("Não alocou memória corretamente\n");
+  else
+  {
+    printf("Memória alocada\n");
+    FIB[0]=0;
+    FIB[1]=1;
+    for (i=2;i<N;i++)
+    {
+      FIB[i]=FIB[i-1]+FIB[i-2];
+    }
+  }
+  for (i=0;i<N;i++) printf("%d\n",FIB[i]);
+  free(FIB);
+  printf("Memória liberada\n");
+}
+\end{verbatim}
+
+A função
+\begin{verbatim}
+void *realloc(void *p, size_t novo_tamanho_em_bytes)
+\end{verbatim}
+permite realocar a memória que já foi alocada no ponteiro \verb|p| com um novo tamanho \verb|novo_tamanho_em_bytes|.
+\begin{ex}
+Faça um programa que armazena os $N$ primeiros números da sequência de Fibonacci. Depois, use o realloc para armazenar novamente os $N$ números de trás para frente.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+void main(void)
+{
+  int N,i;
+  int *FIB;
+  printf("Entre com o número de termos\n");
+  scanf("%d",&N);
+  FIB=malloc(N*sizeof(int));
+  if (FIB==NULL) printf("Não alocou memória corretamente\n");
+  else
+  {
+    printf("Memória alocada\n");
+    FIB[0]=0;
+    FIB[1]=1;
+    for (i=2;i<N;i++)
+    {
+      FIB[i]=FIB[i-1]+FIB[i-2];
+    }
+    for (i=0;i<N;i++) printf("%d\n",FIB[i]);
+    FIB=realloc(FIB,2*N*sizeof(double));
+    for (i=N;i<2*N;i++)
+    {
+      FIB[i]=FIB[2*N-i-1];
+    }
+    for (i=0;i<2*N;i++) printf("%d\n",FIB[i]);
+  }
+  free(FIB);
+  printf("Memória liberada\n");
+}
+\end{verbatim}
+\begin{ex}
+Voltamos ao exemplo \ref{ex_PVC_TDMA}: resolver o PVC
+$$\left\{\begin{array}{l}-u_{xx}+u_x=200e^{-(x-1)^2},~~ 0<x<1.\\
+15u(0)+u'(0)=500\\
+10u(1)+u'(1)=1\end{array}
+\right.
+$$
+usando o método de Thomas.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#define N 11
+
+//Método de Thomas para resolver Ax=y
+//x entra o vetor y e saí a solução x (N posições, i=0,....,N-1)
+//a entra a subdiagonal à esquerda de A (N-1 posições, i=1,...,N-1)
+//b entra a diagonal  (N posições, i=0,....,N-1)
+//c entra a subdiagonal à direita de A (N-1 posições, i=0,...,N-2)
+void Thomas(double x[], const double a[], const double b[], double c[]) 
+{
+  int i;
+
+  /*calculo de c[0]' e d[0]'*/
+  c[0] = c[0] / b[0];
+  x[0] = x[0] / b[0];
+
+
+  /* laço para calcular c' e d' */
+  for (i = 1; i < N; i++) 
+  {
+    double aux = 1.0/ (b[i] - a[i] * c[i - 1]);
+    c[i] = c[i] * aux;
+    x[i] = (x[i] - a[i] * x[i - 1]) * aux;
+  }
+
+  /* Calculando a solução */
+  for (i = N - 1; i >= 0; i--)
+    x[i] = x[i] - c[i] * x[i + 1];
+}
+
+
+void main (void)
+{
+  double *x,*a,*b,*c;
+  if ((x=malloc(N*sizeof(double)))==NULL)
+  {
+  printf("Não alocou memória");
+  return;
+  }
+  if ((a=malloc(N*sizeof(double)))==NULL)
+  {
+  printf("Não alocou memória");
+  return;
+  }
+  if ((b=malloc(N*sizeof(double)))==NULL)
+  {
+  printf("Não alocou memória");
+  return;
+  }
+  if ((c=malloc(N*sizeof(double)))==NULL)
+  {
+  printf("Não alocou memória");
+  return;
+  }
+  a[0]=0;c[N-1]=0;
+
+  //malha
+  int i;
+  double h=1./(N-1);
+  double p[N];
+  for (i=0;i<N;i++) p[i]=i*h;
+  
+  //sistema
+  b[0]=15-1/(h);
+  c[0]=1/(h);
+  x[0]=500;
+  for (i=1;i<N-1;i++)
+  {
+  b[i]=2/(h*h);
+  a[i]=-1/(h*h)-1/(2*h);
+  c[i]=-1/(h*h)+1/(2*h);
+  x[i]=200*exp(-(p[i]-1)*(p[i]-1));
+  }
+  b[N-1]=10+1/h;
+  a[N-1]=-1/h;
+  x[N-1]=1;
+  Thomas(x,a,b,c);
+  free(a);
+  free(b);
+  free(c);
+  for (i=0;i<N;i++) printf("%f\n",x[i]);
+  free(x);
+}
+\end{verbatim}
+\begin{ex}\label{ex_aloc_din}
+Implemente um código que aloque dinamicamente espaço para uma matriz $N\times N$ com as entradas $A_{i,j}=i^2+j^2$.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+
+void preencher(double **A,int N)
+{
+  int i,j;
+  for (i=0;i<N;i++)
+  {
+    for (j=0;j<N;j++)
+    {
+      A[i][j]=i*i+j*j;
+    }
+  }
+}
+
+void main (void)
+{
+  int i,j,N=3;
+  double **A;
+  if ((A=malloc(N*sizeof(double)))==NULL)
+  {
+  printf("Não alocou memória");
+  return;
+  }
+  for (i=0;i<N;i++)
+  {
+    if ((A[i]=malloc(N*sizeof(double)))==NULL)
+    {
+    printf("Não alocou memória");
+    return;
+    }
+  }
+  preencher(A,N);
+  for (i=0;i<N;i++)
+  {
+    for (j=0;j<N;j++)
+    {
+      printf(" %f ",A[i][j]);
+    }
+  printf("\n");
+  }  
+}
+\end{verbatim}
+Naturalmente, você pode armazenar toda a informação de uma matriz em um vetor. Na prática, basta a estrutura de vetor para resolver a maioria dos problemas matriciais. Observe uma versão do código do exemplo \ref{ex_aloc_din} usando apenas vetor:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#define N 3
+
+int m(int i, int j)
+{
+  return i+N*j;
+}
+
+void preencher(double *A)
+{
+  int i,j;
+  for (i=0;i<N;i++)
+  {
+    for (j=0;j<N;j++)
+    {
+      A[m(i,j)]=i*i+j*j;
+    }
+  }
+}
+
+void main (void)
+{
+  int i,j;
+  double *A;
+  if ((A=malloc(N*N*sizeof(double)))==NULL)
+  {
+  printf("Não alocou memória");
+  return;
+  }
+  preencher(A);
+  for (i=0;i<N;i++)
+  {
+    for (j=0;j<N;j++)
+    {
+      printf(" %f ",A[m(i,j)]);
+    }
+  printf("\n");
+  }  
+}
+\end{verbatim}
+
+
+\section{Exercícios}
+\begin{exer}
+Implemente um programa de com as seguintes características: 
+\begin{itemize}
+\item lê $N$ números inteiros na linha de comando, $a_1$, $a_2$, ... $a_N$.
+\item Calcule a soma $S=a_1+a_2+\cdots+a_N$.
+\item Faça o seguinte teste:
+\subitem Se a divisão de $S$ por 3 tiver resto 0, então aloque dinamicamente memória para o vetor de $2N$ posições com as entradas $V_{i}=a_i$, $i=1,2,...,N$ e $V_{i}=a_{2N-i}$, $i=N,N+1,...,2N$.
+\subitem Se a divisão de $S$ por 3 tiver resto 1, então aloque dinamicamente memória para o vetor de $N^2$ posições com as entradas $V_{(i+N(j-1))}=a_i+a_j$, $i=1,2,...,N$ e $j=1,2,...,N$.
+\subitem Se a divisão de $S$ por 3 tiver resto 2, então aloque dinamicamente memória para o vetor de $N$ posições com as entradas $V_{i}=a_i$, $i=1,2,...,N$.
+\end{itemize}
+\end{exer}
+
+\begin{exer}\label{transp_1}
+ Considere o seguinte problema
+\begin{eqnarray*}
+-\frac{dI_1}{dy}+I_1&=&\frac{1}{8}\left(I_1+I_2\right),\qquad 0<y<1\\
+\frac{dI_2}{dy}+ I_2&=&\frac{1}{8}\left(I_1+I_2\right),\qquad 0<y<1\\
+I_1(1)&=&1\\
+I_2(0)&=&1
+\end{eqnarray*}
+Observações:
+\begin{itemize}
+ \item Embora o problema possua solução analítica, vamos resolvê-lo numericamente.
+ \item Esse problema não é um problema de valor inicial, portanto, os métodos de Runge-Kutta, Adams, BDF's não se aplicam.
+ \item Discretize o domínio $y$, $y_k=k/N$, $k=0,\cdots,N$, e resolva o problema
+\begin{eqnarray*}
+\frac{dI_1}{dy}-I_1&=&-S^{k+1/2},\qquad y_k<y<y_{k+1}\\
+\frac{dI_2}{dy}+ I_2&=&S^{k+1/2},\qquad y_k<y<y_{k+1}
+\end{eqnarray*}
+supondo que $S^{k+1/2}$ é um valor conhecido no intervalo $[y_k,y_{k+1}]$. Assim:
+\begin{eqnarray*}
+\frac{d (I_1e^{-y})}{dy}&=&-e^{-y}S^{k+1/2},\qquad y_k<y<y_{k+1}\\
+\frac{d(I_2e^y)}{dy}&=&e^yS^{k+1/2},\qquad y_k<y<y_{k+1}.
+\end{eqnarray*}
+Agora, integramos no intervalo $[y_k,y_{k+1}]$:
+\begin{eqnarray*}
+ \left.I_1e^{-y}\right|_{y_{k}}^{y_{k+1}}&=&S^{k+1/2}\left.e^{-y}\right|_{y_{k}}^{y_{k+1}}\\
+\left.I_2e^y\right|_{y_{k}}^{y_{k+1}}&=&\left.S^{k+1/2}e^y\right|_{y_{k}}^{y_{k+1}}.
+\end{eqnarray*}
+Assim, temos:
+\begin{eqnarray*}
+ I_1^{k+1}e^{-y_{k+1}}-I_1^{k}e^{-y_{k}}&=&S^{k+1/2}\left(e^{-y_{k+1}}-e^{-y_{k}}\right)\\
+ I_2^{k+1}e^{y_{k+1}}-I_2^{k}e^{y_{k}}&=&S^{k+1/2}\left(e^{y_{k+1}}-e^{y_{k}}\right).
+\end{eqnarray*}
+Finalmente, temos o seguinte algoritmo:
+\begin{eqnarray*}
+ I_1^{k}&=&I_1^{k+1}e^{y_{k}-y_{k+1}}+S^{k+1/2}\left(1-e^{y_k-y_{k+1}}\right),\qquad k=N-1,N-2,\cdots ,1,0,\\
+ I_2^{k+1}&=&I_2^{k}e^{y_{k}-y_{k+1}}+S^{k+1/2}\left(1-e^{y_{k}-y_{k+1}}\right), \qquad k=0,1,2,\cdots,N-1,\\
+ I_1^N&=&1,\\
+ I_2^0&=&1.
+\end{eqnarray*}
+onde a primeira aproximação $S^{k+1/2}$ é zero e, depois de calcular $I_1^k$ e $I_2^k$, calculamos uma nova aproximação
+$$
+S^{k+1/2}=\frac{1}{16}\left(I_1^k+I_2^k\right)+\frac{1}{16}\left(I_1^{k+1}+I_2^{k+1}\right).
+$$
+\end{itemize}
+Atualizamos $S^{k+1/2}$ até o processo iterativo converjir.
+\end{exer}
+
+\begin{exer}\label{transp_2}
+ Resolva o seguinte problema de transporte
+\begin{eqnarray*}
+-\frac{dI_1}{dy}+I_1&=&\frac{1}{24}\left(I_1+2I_2+2I_3+I_4\right),\qquad 0<y<1\\
+-\frac{1}{3}\frac{dI_2}{dy}+I_2&=&\frac{1}{24}\left(I_1+2I_2+2I_3+I_4\right),\qquad 0<y<1\\
+\frac{1}{3}\frac{dI_3}{dy}+ I_3&=&\frac{1}{24}\left(I_1+2I_2+2I_3+I_4\right),\qquad 0<y<1\\
+\frac{dI_4}{dy}+ I_4&=&\frac{1}{24}\left(I_1+2I_2+2I_3+I_4\right),\qquad 0<y<1\\
+I_1(1)&=&0.5\\
+I_2(1)&=&0.5\\
+I_3(0)&=&0.5\\
+I_4(0)&=&0.5\\
+\end{eqnarray*}
+Observação: Use o algoritmo introduzida do exercício \ref{transp_1}.
+\end{exer}

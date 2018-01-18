@@ -1,0 +1,662 @@
+\chapter{Estruturas}
+\section{Estruturas}
+Estrutura é uma forma de agrupar um ou mais tipos de variáveis, definindo um novo tipo. Declaramos uma estrutura com a palavra \verb|struct|. Acessamos os membros de uma estrutura usando um ponto.
+\begin{ex}\label{ex_struct}
+Defina um estrutura que suporta uma data no formato dia/mês/ano.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+struct data
+{
+  int dia;
+  char *mes;
+  int ano;
+}d;
+
+void main(void)
+{
+  d.dia=1;
+  d.mes="janeiro";
+  d.ano=2018;
+  printf("A data é %d de %s de %d\n",d.dia,d.mes,d.ano);
+}
+\end{verbatim}
+No exemplo \ref{ex_struct}, nós definimos uma estrutura para armazenar a data da forma \verb|struct data|. Três variáveis existem dentro da estrutura, sendo duas inteiras e uma ponteiro para \verb|char|. Observe que \verb|data| é o nome da estrutura e \verb|d| é uma variável do tipo \verb|data|. Assim, dentro do \verb|main|, acessamos as variáveis internas da estrutura através da variavél \verb|d| usando o ponto: \verb|d.dia|, \verb|d.mes| e \verb|d.ano|.
+
+Um estrutura admite uma carga inicial, veja outra versão do exemplo \ref{ex_struct}:
+\begin{verbatim}
+#include <stdio.h>
+
+struct data
+{
+  int dia;
+  char *mes;
+  int ano;
+}d={1,"janeiro",2018};
+
+void main(void)
+{
+  printf("A data é %d de %s de %d\n",d.dia,d.mes,d.ano);
+  d.dia=5;
+  d.mes="fevereiro";
+  d.ano=2017;
+  printf("A data é %d de %s de %d\n",d.dia,d.mes,d.ano);
+}
+\end{verbatim}
+A ordem da carga inicial é a mesma ordem da definição da estrutura. Alternativamente, podemos definir a variável do tipo \verb|data| no curso do programa:
+\begin{verbatim}
+#include <stdio.h>
+
+struct data
+{
+  int dia;
+  char *mes;
+  int ano;
+};
+
+void main(void)
+{
+  struct data d={1,"janeiro",2018};
+  printf("A data é %d de %s de %d\n",d.dia,d.mes,d.ano);
+  d.dia=5;
+  d.mes="fevereiro";
+  d.ano=2017;
+  printf("A data é %d de %s de %d\n",d.dia,d.mes,d.ano);
+}
+\end{verbatim}
+Em linguagem \verb|C| também admite-se estrutura dentro de estrutura.
+
+\section{Passagem de estrutura para funções}
+A passagem de estrutura para função se faz de forma similar a outro tipo de variável.
+\begin{ex}\label{ex:data}
+Implemente um programa que valide uma data e imprime o resultado.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+struct data
+{
+int dia;
+int mes;
+int ano;
+};
+
+int bissexto(int ano);
+int Max_mes(struct data d);
+int testa_data(struct data d);
+
+int main(int argc,char **argv)
+{
+struct data d;
+d.dia=atoi(argv[1]);
+d.mes=atoi(argv[2]);
+d.ano=atoi(argv[3]);
+if (testa_data(d)==1) printf("%d / %d / %d é uma data válida\n",d.dia,d.mes,d.ano);;
+}
+
+int bissexto(int ano)
+{
+if ((ano%4)==0)
+{
+	if ((ano%100)!=0) return 1;
+}
+if ((ano%400)==0) return 1;
+
+return 0;
+}
+int Max_mes(struct data d)
+{
+ int bi=bissexto(d.ano);
+ switch (d.mes)
+	{
+	case 1:	return 31; break;
+	case 2:	
+	{	
+	if (bi==0) return 28;
+	else  return 29;
+	break;
+	}
+	case 3:	return 31; break;
+	case 4:	return 30; break;
+	case 5:	return 31; break;
+	case 6:	return 30; break;
+	case 7:	return 31; break;
+	case 8:	return 31; break;
+	case 9:	return 30; break;
+	case 10:return 31; break;
+	case 11:return 30; break;
+	case 12:return 31; break;
+	default:return 0; break;		
+}
+
+}
+
+int testa_data(struct data d)
+{
+  int max_mes=Max_mes(d);
+  if (max_mes==0)
+  {
+    printf("Escolha um mes entre 1 e 12\n");	
+    return 0;
+  }
+  else
+  {
+    if (d.dia<=max_mes)
+    {
+      return 1;
+    }
+    else
+    {
+      printf("data incorreta: o mes %d tem no máximo %d dias\n",d.mes,max_mes);
+      return 0;
+    }
+  }
+}
+\end{verbatim}
+A código acima tem três função, duas delas passam uma estrutura e retornam um inteiro. A estrutura tem três membros que são variáveis do tipo \verb|int|. A função \verb|bissexto| passa a variável \verb|ano| e retorna 1 se é bissexto e 0 caso contrário. A função \verb|Max_mes| calcula quandos dias tem um mês, levando em conta se ele é bissexto. Essa função retorna 0 se o a o número de dias do mês estiver errado ou se o número do mês não estiver entre 1 e 12. 
+
+Também podemos passar um endereço de memória de uma estrutura para uma função. Nesse caso, para pegar o valor de uma variável dentro de uma estrutura através do ponteiro, podemos usar \verb|(*p).nome| ou \verb|p->nome|.
+\begin{ex}
+Vamos refazer o exemplo \ref{ex_struct} usando ponteiro para estrutura.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+struct data
+{
+  int dia;
+  char *mes;
+  int ano;
+};
+
+void Escreve(struct data *p)
+{
+  printf("dia= %d\n",p->dia);
+  printf("mes= %s\n",p->mes);
+  printf("ano= %d\n\n",p->ano);
+}
+
+
+void main(void)
+{
+  
+  struct data d;
+  d.dia=1;
+  d.mes="janeiro";
+  d.ano=2018;
+  Escreve(&d);
+}
+\end{verbatim}
+Também podemos fazer as seguintes operações entre estruturas:
+\begin{itemize}
+ \item \verb|x.m| é o valor de \verb|m| dentro da estrutura \verb|x|.
+ \item \verb|&x.m| é o endereço de \verb|m| dentro da estrutura \verb|x|.
+ \item \verb|&x| é o endereço da estrutura \verb|x|.
+ \item \verb|(*p).m| ou \verb|p->m|  é o valor de \verb|m| dentro da estrutura \verb|x| dado que \verb|p| é um ponteiro para a estrutura \verb|x|.
+ \item \verb|x=y| atribui a \verb|x| todo o conteúdo de \verb|y| dado que \verb|x| e \verb|y| têm as mesmas estruturas.
+ \end{itemize}
+\begin{ex}
+Refaça o exemplo \ref{ex:data} passando ponteiro para estrutura para as funções.
+\end{ex}
+\begin{verbatim}
+#include <stdio.h>
+
+struct data
+{
+int dia;
+int mes;
+int ano;
+};
+
+int bissexto(int ano);
+int Max_mes(struct data *d);
+int testa_data(struct data *d);
+
+int main(int argc,char **argv)
+{
+if (argc<4) 
+{
+  printf("Entre com uma data na linha de comando\n");
+  return 0;
+}
+struct data d;
+d.dia=atoi(argv[1]);
+d.mes=atoi(argv[2]);
+d.ano=atoi(argv[3]);
+if (testa_data(&d)==1) printf("%d / %d / %d é uma data válida\n",d.dia,d.mes,d.ano);;
+}
+
+int bissexto(int ano)
+{
+if ((ano%4)==0)
+{
+	if ((ano%100)!=0) return 1;
+}
+if ((ano%400)==0) return 1;
+
+return 0;
+}
+int Max_mes(struct data *d)
+{
+ int bi=bissexto(d->ano);
+ switch (d->mes)
+	{
+	case 1:	return 31; break;
+	case 2:	
+	{	
+	if (bi==0) return 28;
+	else  return 29;
+	break;
+	}
+	case 3:	return 31; break;
+	case 4:	return 30; break;
+	case 5:	return 31; break;
+	case 6:	return 30; break;
+	case 7:	return 31; break;
+	case 8:	return 31; break;
+	case 9:	return 30; break;
+	case 10:return 31; break;
+	case 11:return 30; break;
+	case 12:return 31; break;
+	default:return 0; break;		
+}
+
+}
+
+int testa_data(struct data *d)
+{
+  int max_mes=Max_mes(d);
+  if (max_mes==0)
+  {
+    printf("Escolha um mes entre 1 e 12\n");	
+    return 0;
+  }
+  else
+  {
+    if (d->dia<=max_mes)
+    {
+      return 1;
+    }
+    else
+    {
+      printf("data incorreta: o mes %d tem no máximo %d dias\n",d->mes,max_mes);
+      return 0;
+      }
+    }
+}
+\end{verbatim}
+
+\section{Problemas}
+\begin{ex}\label{ex:integral}
+Seja 
+$$
+F(x)=\int_0^x t^{4}e^{-50(t-2)^2}dt.
+$$
+Faça um código para calcular $F(x)$, salve seus valores em arquivo e visualize a função no scilab.
+\end{ex}
+Vamos integrar usando a regra de Boole
+ \begin{eqnarray*}
+  \int_a^b f(x)\, dx &\approx & \frac{2h}{45}\left(7f(x_1) + 32f(x_2)+12f(x_3)+32f(x_4)+14f(x_5)+32f(x_6)+12f(x_7)+32f(x_8)+14f(x_9)+\cdots \right.\\
+  &+&\left.14f(x_{4n-3})+32f(x_{4n-2})+12f(x_{4n-1})+32f(x_{4n})+7f(x_{4n+1})\right)
+\end{eqnarray*}
+onde 
+\begin{eqnarray*}
+h &=& \frac{b-a}{4n}\\
+x_i &=& a + (i-1)h, \qquad i=1,2,\cdots,4n+1.
+\end{eqnarray*}
+Vamos resolver o problema por partes. Primeiro, vamos implementar uma rotina que integra uma função pelo método de Boole.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+double f(double t)
+{
+return t*t*t*t*exp(-50*(t-2)*(t-2));
+}
+
+void main(void)
+{
+  int N=10,i;
+  double a=0,b=4,h=(b-a)/(4*N),Int=0;
+
+  Int=14./45.*h*f(a);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*h*f(a+h);
+    Int+=24./45.*h*f(a+2*h);
+    Int+=64./45.*h*f(a+3*h);
+    Int+=28./45.*h*f(a+4*h);
+    a+=4*h;
+  }
+  Int-=14./45.*h*f(a);
+printf("%f\n",Int);
+}
+\end{verbatim}
+Agora, vamos usar uma estrutura com $a$,$b$, e $N$.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+struct INT
+{
+double a;
+double b;
+int    N;
+};
+
+double f(double t)
+{
+return t*t*t*t*exp(-50*(t-2)*(t-2));
+}
+
+double Boole(struct INT *I)
+{
+  int i,N=I->N;
+  double a=I->a,b=I->b,h=(b-a)/(4*N),Int=0;
+
+  Int=14./45.*f(a);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*f(a+h);
+    Int+=24./45.*f(a+2*h);
+    Int+=64./45.*f(a+3*h);
+    Int+=28./45.*f(a+4*h);
+    a+=4*h;
+  }
+  Int-=14./45.*f(a);
+return h*Int;
+}
+
+void main(void)
+{
+  struct INT I;
+  I.a=0;
+  I.b=4;
+  I.N=10;
+
+printf("%f\n",Boole(&I));
+}
+\end{verbatim}
+Agora vamos fazer a primeira versão do código que resolve o problema acima. Vamos calcular $F(x)$ para onze pontos no intervalo $[0,4]$.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+struct INT
+{
+double a;
+double b;
+int    N;
+};
+
+double f(double t)
+{
+return t*t*t*t*exp(-50*(t-2)*(t-2));
+}
+
+double Boole(struct INT *I)
+{
+  int i,N=I->N;
+  double a=I->a,b=I->b,h=(b-a)/(4*N),Int=0;
+
+  Int=14./45.*f(a);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*f(a+h);
+    Int+=24./45.*f(a+2*h);
+    Int+=64./45.*f(a+3*h);
+    Int+=28./45.*f(a+4*h);
+    a+=4*h;
+  }
+  Int-=14./45.*f(a);
+return h*Int;
+}
+
+void main(void)
+{
+  struct INT I;
+  I.a=0;
+  I.N=10;
+  int i,M=10;
+  for(i=0;i<=M;i++)
+  {
+  I.b=4.*i/M;
+  printf("%f\n",Boole(&I));
+  }
+}
+\end{verbatim}
+Veja, até agora calculamos as integrais sem preocupação com a convergência. Então, vamos implementar um código que calcule as integrais até que o erro fica menor que uma tolerância relativa de $10^{-8}$.
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+struct INT
+{
+double a;
+double b;
+int    N;
+};
+
+double f(double t)
+{
+return t*t*t*t*exp(-50*(t-2)*(t-2));
+}
+
+double Boole(struct INT *I)
+{
+  int i,N=I->N;
+  double a=I->a,b=I->b,h=(b-a)/(4*N),Int=0;
+
+  Int=14./45.*f(a);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*f(a+h);
+    Int+=24./45.*f(a+2*h);
+    Int+=64./45.*f(a+3*h);
+    Int+=28./45.*f(a+4*h);
+    a+=4*h;
+  }
+  Int-=14./45.*f(a);
+return h*Int;
+}
+double Integral(struct INT *I)
+{
+  double I1,I2,aux;
+  I1=Boole(I);
+  do
+  {
+    (I->N)*=2;
+    I2=Boole(I);
+    aux=fabs(I2-I1);
+    I1=I2;
+  }while ((aux/fabs(I2))>1e-8);
+  return I2;
+}
+
+double F(double x)
+{
+  struct INT I;
+  I.a=0;
+  I.N=10;
+  I.b=x;
+  return Integral(&I);
+}
+void main(void)
+{
+  int i,M=1000;
+  double res;
+  FILE *arq;
+  arq=fopen("saida.dat","w+b");
+  if (arq==NULL) printf("Não foi possível abrir o arquivo");
+  else
+  {
+    printf("arquivo aberto com sucesso");
+    for(i=0;i<=M;i++)
+    {
+      res=F(4.*i/M);
+      fwrite(&res,sizeof(double),1,arq);
+      printf("%f\n",res);
+    }
+    fclose(arq);
+  }
+}
+\end{verbatim}
+Agora vamos imprimir o resultado em arquivo e abrir no scilab:
+\begin{verbatim}
+#include <stdio.h>
+#include <math.h>
+
+struct INT
+{
+double a;
+double b;
+int    N;
+};
+
+double f(double t)
+{
+return t*t*t*t*exp(-50*(t-2)*(t-2));
+}
+
+double Boole(struct INT *I)
+{
+  int i,N=I->N;
+  double a=I->a,b=I->b,h=(b-a)/(4*N),Int=0;
+
+  Int=14./45.*f(a);
+  for(i=0;i<N;i++)
+  {
+    Int+=64./45.*f(a+h);
+    Int+=24./45.*f(a+2*h);
+    Int+=64./45.*f(a+3*h);
+    Int+=28./45.*f(a+4*h);
+    a+=4*h;
+  }
+  Int-=14./45.*f(a);
+return h*Int;
+}
+double Integral(struct INT *I)
+{
+  double I1,I2,aux;
+  I1=Boole(I);
+  do
+  {
+    (I->N)*=2;
+    I2=Boole(I);
+    aux=fabs(I2-I1);
+    I1=I2;
+  }while ((aux/fabs(I2))>1e-8);
+  return I2;
+}
+
+double F(double x)
+{
+  struct INT I;
+  I.a=0;
+  I.N=10;
+  I.b=x;
+  return Integral(&I);
+}
+void main(void)
+{
+  int i,M=1000;
+  double res;
+  FILE *arq;
+  arq=fopen("saida.dat","w+b");
+  if (arq==NULL) printf("Não foi possível abrir o arquivo");
+  else
+  {
+    printf("arquivo aberto com sucesso");
+    for(i=0;i<=M;i++)
+    {
+      res=F(4.*i/M);
+      fwrite(&res,sizeof(double),1,arq);
+      printf("%f\n",res);
+    }
+    fclose(arq);
+  }
+}
+\end{verbatim}
+Abrimos no scilab com os seguintes comandos:
+\begin{verbatim}
+M=1000;
+x=linspace(0,4,M);
+arq=mopen('home/fulano/pasta1/pasta2/saida.dat','rb')
+Snum=mget(M,'d',arq)
+mclose(arq)
+plot(x,Snum)
+\end{verbatim}
+Comentários sobre os códigos:
+\begin{itemize}
+ \item  O ponto na linha \verb|res=F(4.*i/M);| é importante. Substituir a linha por \verb|res=F(4*i/M);| não produz o resultado esperado.
+ \item As linhas \verb|return Integral(&I);| e \verb|I1=Boole(I);| passam um ponteiro para a mesma estrutura \verb|INT|, mas a primera usa \verb|&I| e a segunda \verb|I|. Procure entender essa diferença na notação.
+\end{itemize}
+
+Observe que a rotina de integração vai aumentando o número de pontos até a convergência. Uma alternativa mais eficiente é implementar um esquema auto-adaptativo com refinamento local, isto é, adicionar pontos apenas nas regiões onde a integral ainda não convergiu.
+\section{Exercícios}
+\begin{exer}
+Faça uma nova versão do exercício \ref{edo1}.
+\begin{itemize}
+ \item Use o método de Adams-Bashforth terceira ordem:
+  \begin{equation}
+  u^{(n+3)}=u^{(n+2)}+\frac{h}{12}\left[23f\left(t^{(n+2)},u(t^{(n+2)})\right)-16f\left(t^{(n+1)},u(t^{(n+1)})\right)+5f\left(t^{(n)},u(t^{(n)})\right)\right]
+ \end{equation}
+ \item Use o método de Kunge-Kutta terceira ordem para calcular as três primeiras iterações:
+\begin{eqnarray*}
+k_1&=&hf\left(t^{(n)},u^{(n)}\right)\\
+k_2&=&hf\left(t^{(n)}+h/2,u^{(n)}+k_1/2\right)\\
+k_3&=&hf\left(t^{(n)}+h,u^{(n)}-k1+2k_2\right)\\
+u^{(n+1)}&=&u^{(n)}+\frac{k_1+4k_2+k_3}{6}
+\end{eqnarray*}
+\item Faça uma rotina geral para sistemas de equações diferenciais ordinárias.
+\end{itemize}
+Teste usando vários PVIs:
+\begin{enumerate}
+\item\begin{eqnarray*}
+u' &=& u+e^{-t},\\
+u(0)&=&1
+\end{eqnarray*}
+\item\begin{eqnarray*}
+u' &=& -2u+v,\\
+v' &=& u-2v-e^{-t^2},\\
+u(0)&=&1\\
+v(0)&=&0.
+\end{eqnarray*}
+\item\begin{eqnarray*}
+u' &=& -2u+v-2w,\\
+v' &=& u-2v+w,\\
+w' &=& u+v-w+e^{-t},\\
+u(0)&=&1\\
+v(0)&=&0\\
+w(0)&=&-1.
+\end{eqnarray*}
+\end{enumerate}
+\end{exer}
+
+\begin{exer}\label{exerc:transp_int}
+Implemente um algorítmo para calcular a seguinte integral dupla:
+$$
+F(x)=\int_0^1\int_0^1\frac{1}{\mu}e^{-\frac{1}{\mu} |s-x|}Q(s)d\mu ds
+$$
+onde $Q(s)=s(1-s)$.
+
+Dicas:
+\begin{itemize}
+ \item Embora a integral está bem definida, tem singularidades quando $x=s$ e $\mu=0$. Logo, um abordagem ingênua produz resultado com bastante erro.
+ \item Use o seguinte truque para remover a singularidade:
+ $$
+F(x)=\int_0^1\int_0^1\frac{1}{\mu}e^{-\frac{1}{\mu} |s-x|}(Q(s)-Q(x))d\mu ds+Q(x)\int_0^1\int_0^1\frac{1}{\mu}e^{-\frac{1}{\mu} |s-x|}d\mu ds.
+$$
+\subitem A primeira integral fica numericamente bem comportada e a segunda podemos integral analiticamente:
+\begin{eqnarray*}
+ \int_0^1\int_0^1\frac{1}{\mu}e^{-\frac{1}{\mu} |s-x|}d\mu ds&=&\int_0^1\int_0^1\frac{1}{\mu}e^{-\frac{1}{\mu} |s-x|}ds d\mu\\
+ &=&\int_0^1\left[\int_0^x\frac{1}{\mu}e^{-\frac{1}{\mu} (x-s)}ds+\int_x^1\frac{1}{\mu}e^{-\frac{1}{\mu} (s-x)}ds \right]d\mu\\ 
+&=&\int_0^1\left[\left. e^{-\frac{1}{\mu} (x-s)}\right|_0^x-\left.e^{-\frac{1}{\mu} (s-x)}\right|_x^1 \right]d\mu\\ 
+&=&\int_0^1\left[ 1-e^{-\frac{x}{\mu} }-e^{-\frac{1}{\mu} (1-x)}+1 \right]d\mu\\
+&=&2-\int_0^1\left[ e^{-\frac{x}{\mu} }+e^{-\frac{(1-x)}{\mu} } \right]d\mu.
+\end{eqnarray*}
+\end{itemize}
+
+
+\end{exer}
