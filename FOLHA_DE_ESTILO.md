@@ -6,7 +6,7 @@ Estamos muito mais interessados em melhor o conteúdo do livro (tando em qualida
 
 Qualquer dúvida, escreva em nossa lista de discussão:
 
-<livro_colaborativo@googlegroups.com>
+<reamat@googlegroups.com>
 
 ## Regionalização e Estilo de Escrita
 
