@@ -1,4 +1,4 @@
-# Transformadas Integrais: Um Livro Colaborativo
+# Computaçao Científica: Um Livro Colaborativo
 
 Este livro busca introduzir a linguagem de programação C no contexto de computação científica.
 
