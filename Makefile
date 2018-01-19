@@ -34,10 +34,22 @@ dvi: main.tex
 	latex 	main
 	latex 	main
 
+html: main.html
 
+main.html: main.tex
+	rm -f html/*
+	cp config-html.knd config.knd
+	mkdir -p html
+	latex main
+	latex main
+	latex main
+	mk4ht htlatex main "myconfig,3,notoc*" "" "-d./html/"
+	cp config-pdf.knd config.knd
+
+.PHONY: clean
 
 clean: 
 	rm -rf */*/*.aux */*/*.log */*/*.out */*/*.toc */*/*.bbl */*/*.idx */*/*.ilg */*/*.ind */*/*.blg */*/*.backup 
 	rm -rf */*.aux */*.log */*.out */*.toc */*.bbl */*.idx */*.ilg */*.ind */*.blg */*.backup 
-	rm -f *.aux *.log *.out *.toc *.bbl *.idx *.ilg *.ind *.blg *.backup 
+	rm -f *.aux *.log *.out *.toc *.bbl *.idx *.ilg *.ind *.blg *.backup *.html
 
