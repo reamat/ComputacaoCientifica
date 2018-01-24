@@ -999,8 +999,8 @@ u(1,t)&=&2
 \end{eqnarray*}
 onde $\mu(x)=0.5 - 0.2x$. Use a seguinte discretização:
 \begin{eqnarray*}
-\frac{u^{k+1}_i-u^{k}_i}{h_t}&=&\frac{\mu_{i+1/2}\left(u^{k}_{i+1}-u^{k}_i\right)-\mu_{i-1/2}\left(u^{k}_{i}-u^{k}_{i-1}\right)}{h_x^2}+\\
-&+&\frac{\mu_{i+1/2}\left(u^{k+1}_{i+1}-u^{k+1}_i\right)-\mu_{i-1/2}\left(u^{k+1}_{i}-u^{k+1}_{i-1}\right)}{h_x^2}\\
+\frac{u^{k+1}_i-u^{k}_i}{h_t}&=&\frac{\mu_{i+1/2}\left(u^{k}_{i+1}-u^{k}_i\right)-\mu_{i-1/2}\left(u^{k}_{i}-u^{k}_{i-1}\right)}{2h_x^2}+\\
+&+&\frac{\mu_{i+1/2}\left(u^{k+1}_{i+1}-u^{k+1}_i\right)-\mu_{i-1/2}\left(u^{k+1}_{i}-u^{k+1}_{i-1}\right)}{2h_x^2}\\
 u_i^0&=&10e^{-x_i}\\
 u_0^{k}&=&1\\
 u_N^{k}&=&2,
