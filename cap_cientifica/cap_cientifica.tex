@@ -1,3 +1,4 @@
+%Este trabalho está licenciado sob a Licença Creative Commons Atribuição-CompartilhaIgual 3.0 Não Adaptada. Para ver uma cópia desta licença, visite https://creativecommons.org/licenses/by-sa/3.0/ ou envie uma carta para Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 \chapter{Bibliotecas de computação científica}
 
 \section{GSL - quadraturas}
@@ -985,4 +986,31 @@ u_i^0&=&10e^{-x_i}\\
 u_0^{k}&=&1\\
 u_N^{k}&=&2,
 \end{eqnarray*}
+\end{exer}
+
+
+\begin{exer}
+Resolva numericamente o problema dado pela equação do calor evolutiva
+\begin{eqnarray*}
+\frac{\partial u}{\partial t}&=&\frac{\partial}{\partial x}\left(\mu(x)\frac{\partial u}{\partial x}\right),\qquad 0<x<1,\ t>0\\
+u(x,0)&=&10e^{-x}\\
+u(0,t)&=&1\\
+u(1,t)&=&2
+\end{eqnarray*}
+onde $\mu(x)=0.5 - 0.2x$. Use a seguinte discretização:
+\begin{eqnarray*}
+\frac{u^{k+1}_i-u^{k}_i}{h_t}&=&\frac{\mu_{i+1/2}\left(u^{k}_{i+1}-u^{k}_i\right)-\mu_{i-1/2}\left(u^{k}_{i}-u^{k}_{i-1}\right)}{2h_x^2}+\\
+&+&\frac{\mu_{i+1/2}\left(u^{k+1}_{i+1}-u^{k+1}_i\right)-\mu_{i-1/2}\left(u^{k+1}_{i}-u^{k+1}_{i-1}\right)}{2h_x^2}\\
+u_i^0&=&10e^{-x_i}\\
+u_0^{k}&=&1\\
+u_N^{k}&=&2,
+\end{eqnarray*}
+onde
+\begin{itemize}
+ \item $u^k_i\approx u(x_i,t_k)$ é uma aproximação para a solução no tempo $t_k$ e ponto $x_i$.
+ \item $x_i$ é uma malha espacial.
+ \item $h_t$ é incremento temporal.
+ \item $h_x$ é o espaçamento da malha espacial.
+ \item $\mu_{i+1/2}=\frac{\mu(x_{i+1})+\mu(x_i)}{2}$ é o valor aproximado da difusão no intervalo $[x_i,x_{i+1}]$.
+\end{itemize}
 \end{exer}
