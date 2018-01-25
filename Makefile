@@ -10,7 +10,7 @@
 
 
 pdf: main.tex
-	cp config-book.knd cnfig.knd
+	cp config-book.knd config.knd
 	latex 	main
 	bibtex 	main
 #	makeindex main
@@ -21,7 +21,7 @@ pdf: main.tex
 
 
 ps: main.tex
-	cp config-book.knd cnfig.knd
+	cp config-book.knd config.knd
 	latex 	main
 	bibtex 	main
 #	makeindex main
@@ -30,7 +30,7 @@ ps: main.tex
 	dvips 	main.dvi
 
 dvi: main.tex
-	cp config-book.knd cnfig.knd
+	cp config-book.knd config.knd
 	latex 	main
 	bibtex 	main
 #	makeindex main
