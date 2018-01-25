@@ -10,6 +10,7 @@
 
 
 pdf: main.tex
+	cp config-book.knd cnfig.knd
 	latex 	main
 	bibtex 	main
 #	makeindex main
@@ -20,6 +21,7 @@ pdf: main.tex
 
 
 ps: main.tex
+	cp config-book.knd cnfig.knd
 	latex 	main
 	bibtex 	main
 #	makeindex main
@@ -28,6 +30,7 @@ ps: main.tex
 	dvips 	main.dvi
 
 dvi: main.tex
+	cp config-book.knd cnfig.knd
 	latex 	main
 	bibtex 	main
 #	makeindex main
@@ -44,7 +47,7 @@ main.html: main.tex
 	latex main
 	latex main
 	mk4ht htlatex main "myconfig,3,notoc*" "" "-d./html/"
-	cp config-pdf.knd config.knd
+	cp config-book.knd config.knd
 
 .PHONY: clean
 
