@@ -14,16 +14,20 @@
 
 \begin{document}
  \title{Computação Científica em Linguagem C\\\small{Um Livro Colaborativo}}
+
+%
  \addcontentsline{toc}{chapter}{Capa}
  \maketitle
+
 \include{organizadores}
 \include{licenca}
 \include{nota_organizadores}
 \include{prefacio}
  
- 
- \tableofcontents
+\ifisbook 
+\tableofcontents
 \addcontentsline{toc}{chapter}{Sumário}
+\fi
 
 \mainmatter
 
