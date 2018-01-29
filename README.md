@@ -2,7 +2,7 @@
 
 Este é um livro coaborativo que  busca introduzir a linguagem de programação C no contexto de computação científica.
 
-_Fork us on GitHub!_ O código fonte do livro está disponível no repositório GitHub https://github.com/reamat/CalculoNumerico.
+_Fork us on GitHub!_ O código fonte do livro está disponível no repositório GitHub https://github.com/reamat/ComputacaoCientifica.
 
 Para entrar em contato com os organizadores, envie um e-mail para reamat@ufrgs.br. Ainda, você pode postar no [fórum](https://www.ufrgs.br/reamat/forum.html) do projeto REAMAT.
 
