@@ -1,0 +1,38 @@
+%Este trabalho está licenciado sob a Licença Creative Commons Atribuição-CompartilhaIgual 3.0 Não Adaptada. Para ver uma cópia desta licença, visite https://creativecommons.org/licenses/by-sa/3.0/ ou envie uma carta para Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+\chapter{Introdução à programação orientada a objetos}
+\section{Classes e objetos}
+
+
+\begin{verbatim}
+#include <iostream>
+#include <assert.h>
+
+//Array de estruturas.
+
+
+class estrutura{
+	public:
+		double x,y;
+		int n;};
+
+
+
+int main(int argn, char** argc){
+	estrutura conteudo[2]; 
+	
+	conteudo[0].x=10;
+	conteudo[0].y=10;
+	conteudo[0].n=3;
+	
+	conteudo[1].x=20;
+	conteudo[1].y=20;
+	conteudo[1].n=6;
+
+	std::cout <<"conteudo[1].x = " << conteudo[1].x << std::endl;
+
+	//Mas qual a diferença entre estrutura e classe?
+	return 0;
+}
+
+\end{verbatim}
