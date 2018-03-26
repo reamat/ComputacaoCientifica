@@ -1,38 +1,139 @@
 %Este trabalho está licenciado sob a Licença Creative Commons Atribuição-CompartilhaIgual 3.0 Não Adaptada. Para ver uma cópia desta licença, visite https://creativecommons.org/licenses/by-sa/3.0/ ou envie uma carta para Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
 \chapter{Introdução à programação orientada a objetos}
+Neste capítulo discutiremos os objetos e as classes de objetos. Objetos são semelhantes às estruturas estudadas no capítulo \ref{cap:estruturas} e provêm muito mais possibilidades. Além de variáveis internas, os objetos possuem funções internas, chamadas de métodos.
+
 \section{Classes e objetos}
 
-
+Uma classe de objetos é estrutura formada por variáveis internas e funções. Vejamos um exemplo de uma classe contendo três variáveis internas e um método.
+Veja o seguinte exemplo:
 \begin{verbatim}
 #include <iostream>
-#include <assert.h>
 
-//Array de estruturas.
-
-
-class estrutura{
+class minha_classe_de_objetos{
 	public:
 		double x,y;
-		int n;};
+		int n;
+
+		void multiplica(void);
+};
+
+
+void minha_classe_de_objetos::multiplica(void){
+	x=y*n;
+}
+
+
+int main(int argn, char** argc){
+	minha_classe_de_objetos objeto; 
+	
+	objeto.x=10;
+	objeto.y=10;
+	objeto.n=3;
+	
+	std::cout <<"objeto.x = " << objeto.x << std::endl;
+	std::cout <<"objeto.y = " << objeto.y << std::endl;
+	std::cout <<"objeto.n = " << objeto.n << std::endl;
+
+	std::cout <<"objeto.multipla()" << std::endl;
+
+	objeto.multiplica();
+
+	std::cout <<"objeto.x = " << objeto.x << std::endl;
+        return 0;
+}
+\end{verbatim}
+
+Aqui foi declarada a classe chamada de "\verb|minha_classe_de_objetos|``. Dentro desta classe, há três variáveis públicas (depois discutiremos este conceito) e um método. As variáveis públicas dentro de uma objeto são acessadas da mesma forma como em uma estrutura. Os métodos precisam ser declarados dentro da classe e depois definidos indicando o nome da classe conforme exemplo.
+
+
+\section{Variáveis e métodos privados}
+
+Em C++, é possível criar variáveis e métodos privados, que são acessíveis apenas internamente. Veja o seguinte exemplo:
+\begin{verbatim}
+#include <iostream>
+
+class minha_classe_de_objetos{
+	public:
+		double x,y;
+		
+		void multiplica(void);
+		void grava_n(int);
+		int le_n(void);
+
+	private:
+
+		int n;		
+};
+
+
+void minha_classe_de_objetos::multiplica(void){
+	x=y*n;
+}
+
+
+void minha_classe_de_objetos::grava_n(int k){
+	n=k;
+}
+
+int minha_classe_de_objetos::le_n(void){
+	return n;
+}
+
 
 
 
 int main(int argn, char** argc){
-	estrutura conteudo[2]; 
+	minha_classe_de_objetos objeto; 
 	
-	conteudo[0].x=10;
-	conteudo[0].y=10;
-	conteudo[0].n=3;
+	objeto.x=10;
+	objeto.y=10;
+	objeto.grava_n(3);
 	
-	conteudo[1].x=20;
-	conteudo[1].y=20;
-	conteudo[1].n=6;
+	std::cout <<"objeto.x = " << objeto.x << std::endl;
+	std::cout <<"objeto.y = " << objeto.y << std::endl;
+	std::cout <<"objeto.n = " << objeto.le_n() << std::endl;
 
-	std::cout <<"conteudo[1].x = " << conteudo[1].x << std::endl;
+	std::cout <<"objeto.multipla()" << std::endl;
 
-	//Mas qual a diferença entre estrutura e classe?
+	objeto.multiplica();
+
+	std::cout <<"objeto.x = " << objeto.x << std::endl;
 	return 0;
 }
-
 \end{verbatim}
+Neste exemplo, foram criados dois métodos: \verb|grava_n()| e \verb|le_n()|. Estes métodos são públicos e permitem o acesso à variável privada $n$. Um tentativa de acessar diretamente a variável, por exemplo, $objeto.n=2$ geraria um erro de compilação.
+
+
+\section{Método construtor}
+
+É possível definir dentro de uma classe, um método a ser executado automticamente cada vez um objeto daquela classe é criado. Este método é chamando de construtor e recebe o mesmo nome da classe. Veja o exemplo:
+\begin{verbatim}
+ #include <iostream>
+
+class minha_classe_de_objetos{
+	public:
+		double x,y;
+		minha_classe_de_objetos(void);
+
+	private:
+		int n;		
+};
+
+
+minha_classe_de_objetos::minha_classe_de_objetos(void){
+	std::cout<< "Um objeto da classe minha_classe_de_objetos foi criado."<<std::endl;
+}
+
+
+
+
+int main(int argn, char** argc){
+	minha_classe_de_objetos objeto;
+
+
+	return 0;
+}
+\end{verbatim}
+
+
