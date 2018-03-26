@@ -1,4 +1,4 @@
-#Diretório: cap_ponteiros
+#Diretório: cap_objetos
 
 Este diretório contém o código fonte do capítulo sobre classes e objetos em linguagem C++.
 
