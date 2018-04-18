@@ -1,4 +1,3 @@
-
 %Este trabalho está licenciado sob a Licença Creative Commons Atribuição-CompartilhaIgual 3.0 Não Adaptada. Para ver uma cópia desta licença, visite https://creativecommons.org/licenses/by-sa/3.0/ ou envie uma carta para Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -12,19 +11,30 @@
 
 \input preambulo.tex
 
-\begin{document}
- \title{Computação Científica em Linguagem C\\\small{Um Livro Colaborativo}}
+\makeindex
 
-%
- \addcontentsline{toc}{chapter}{Capa}
- \maketitle
+\begin{document}
+
+\frontmatter
+
+\title{Computação Científica em Linguagem C\\\small{Um Livro Colaborativo}}
+\author{}
+\date{\today}
+\ifishtml
+\else
+\addcontentsline{toc}{chapter}{Capa}
+\fi
+
+\maketitle
 
 \include{organizadores}
+\include{colaboradores}
 \include{licenca}
 \include{nota_organizadores}
 \include{prefacio}
  
-\ifisbook 
+
+\ifisbook
 \tableofcontents
 \addcontentsline{toc}{chapter}{Sumário}
 \fi
@@ -55,11 +65,13 @@
 \fancyhead[LO]{REFERÊNCIAS BIBLIOGRÁFICAS}
 \fancyhead[LE,RO]{\thepage}
 
-\include{colaboradores}
+\ifisbook
 \clearpage
 \addcontentsline{toc}{chapter}{Índice Remissivo}
-\fancyhead[RE]{Computação Científica}
+\fancyhead[RE]{Cálculo Numérico}
 \fancyhead[LO]{ÍNDICE REMISSIVO}
 \fancyhead[LE,RO]{\thepage}
 \printindex
+\fi
+
 \end{document}

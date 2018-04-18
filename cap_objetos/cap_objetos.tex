@@ -170,4 +170,47 @@ int main(int argn, char** argc){
 	return 0;
 }
 \end{verbatim}
- Obsserve que a classe acima admite dois construtores distindos, o construtor padrão \verb+minha_classe_de_objetos(void)+ e o construtor \verb+minha_classe_de_objetos(int)+.
+Observe que a classe acima admite dois construtores distindos, o construtor padrão \verb+minha_classe_de_objetos(void)+ e o construtor \verb+minha_classe_de_objetos(int)+.
+
+
+\section{Ponteiros para objetos}
+Assim como qualquer outro tipo de variável, é possivel criar ponteiros e arrays de classes de objetos. Veja o exemplo:
+
+\begin{verbatim}
+#include <iostream>
+
+class minha_classe_de_objetos{
+	public:
+		double x,y;
+		minha_classe_de_objetos(void);
+		minha_classe_de_objetos(int);
+
+	private:
+		int n;		
+};
+
+
+minha_classe_de_objetos::minha_classe_de_objetos(void){
+	std::cout<< "Um objeto da classe minha_classe_de_objetos foi criado."<<std::endl;
+}
+
+minha_classe_de_objetos::minha_classe_de_objetos(int j){
+	std::cout<< "Um objeto da classe minha_classe_de_objetos foi criado e recebeu j = "<<j<<"."<<std::endl;
+}
+
+
+
+int main(int argn, char** argc){
+    minha_classe_de_objetos* ponteiro_para_objeto;
+
+	ponteiro_para_objeto=new minha_classe_de_objetos(1);
+
+	//É possível acessar o objeto das seguintes formas:
+	ponteiro_para_objeto->x=1;
+	(*ponteiro_para_objeto).x=1;	
+	ponteiro_para_objeto[0].x=1;	
+	return 0;
+}
+\end{verbatim}
+No exemplo, criou-se um ponteiro chamado \verb+ponteiro_para_objeto+ para classe do tipo \verb+minha_classe_de_objetos+. Observe que o objeto deve ser criado usando o comando \verb+new+.
+ 
